@@ -195,16 +195,18 @@ public class BatchedQuery {
 				}
         	}
         	throw e;
-		} finally {
-			if (statement != null) {
-				try {
-					statement.close();
-				} catch (SQLException closeEx) {
-					// Log close exception
-					System.err.println("Error closing statement: " + closeEx.getMessage());
-				}
-			}
-		}
+		} 
+		
+//		finally {
+//			if (statement != null) {
+//				try {
+//					statement.close();
+//				} catch (SQLException closeEx) {
+//					// Log close exception
+//					System.err.println("Error closing statement: " + closeEx.getMessage());
+//				}
+//			}
+//		}
 	}
 	
 	public void fetchBatch() throws SQLException {
