@@ -4,7 +4,6 @@ library(testthat)
 
 testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   assertTempEmulationSchemaSet(connectionDetails$dbms)
-  
   connection <- connect(connectionDetails)
   on.exit(dropEmulatedTempTables(connection))
   on.exit(disconnect(connection), add = TRUE)
@@ -34,19 +33,23 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   # 
   # expect_gt(longestObsPeriod$duration, 1)
   
-  topAges <- person %>%
-    inner_join(observationPeriod, by = "person_id") %>%
-    mutate(age = year(observation_period_start_date) - year_of_birth) %>%
-    distinct(age) %>%
-    rename(person_age = age) %>%
-    arrange(desc(person_age)) %>%
-    head(10) %>%
-    collect()
-  expect_gt(nrow(topAges), 1)
   
+  # https://github.com/tidyverse/dbplyr/issues/1519 head() does not get translated correctly 
+  if (dbms(connection) != "oracle") {
+    topAges <- person %>%
+      inner_join(observationPeriod, by = "person_id") %>%
+      mutate(age = year(observation_period_start_date) - year_of_birth) %>%
+      distinct(age) %>%
+      rename(person_age = age) %>%
+      arrange(desc(person_age)) %>%
+      head(10) %>%
+      collect()
+    expect_gt(nrow(topAges), 1)
+  }
+
   # Test copy_inline -----------------------------------------------------------
   # wrong translation, we can solve it locally (see backend-DatabaseConnector, commented out lines), but solution needs to be included in dbplyr 
-  if (dbms(connection) != "redshift") {
+  if (!(dbms(connection) %in% c("redshift", "oracle"))) {
     rows <- dbplyr::copy_inline(connection, mtcars) %>%
       filter(hp > 200) %>%
       arrange(wt, mpg) %>%
