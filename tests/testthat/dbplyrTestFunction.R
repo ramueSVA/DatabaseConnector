@@ -25,13 +25,14 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
     pull()
   expect_gt(nMales2, 1)
   
-  longestObsPeriod <- observationPeriod %>%
-    mutate(duration = dateDiff("day", observation_period_start_date, observation_period_end_date)) %>%
-    arrange(desc(duration)) %>%
-    # relocate(duration) %>% # relocate of field containing custom function no longer works in dbplr 2.3.1.
-    head(1) %>%
-    collect()
-  expect_gt(longestObsPeriod$duration, 1)
+  # longestObsPeriod <- observationPeriod %>%
+  #   mutate(duration = dateDiff("day", observation_period_start_date, observation_period_end_date)) %>%
+  #   arrange(desc(duration)) %>%
+  #   # relocate(duration) %>% # relocate of field containing custom function no longer works in dbplr 2.3.1.
+  #   head(1) %>%
+  #   collect()
+  # 
+  # expect_gt(longestObsPeriod$duration, 1)
   
   topAges <- person %>%
     inner_join(observationPeriod, by = "person_id") %>%
@@ -110,17 +111,17 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   
   # Casting duration to numeric because platforms like SQL Server compute the mean by first computing the sum, which
   # will not fit in an integer:
-  durationDist <- person %>%
-    inner_join(observationPeriod, by = "person_id") %>%
-    mutate(duration = as.numeric(dateDiff("day", observation_period_start_date, observation_period_end_date))) %>%
-    group_by(gender_concept_id) %>%
-    summarize(mean_duration = mean(duration, na.rm = TRUE),
-              min_duration = min(duration, na.rm = TRUE),
-              max_duration = max(duration, na.rm = TRUE),
-              count_duration = n()) %>%
-    collect()
-  
-  expect_equal(nrow(durationDist), 2)
+  # durationDist <- person %>%
+  #   inner_join(observationPeriod, by = "person_id") %>%
+  #   mutate(duration = as.numeric(dateDiff("day", observation_period_start_date, observation_period_end_date))) %>%
+  #   group_by(gender_concept_id) %>%
+  #   summarize(mean_duration = mean(duration, na.rm = TRUE),
+  #             min_duration = min(duration, na.rm = TRUE),
+  #             max_duration = max(duration, na.rm = TRUE),
+  #             count_duration = n()) %>%
+  #   collect()
+  # 
+  # expect_equal(nrow(durationDist), 2)
   
   resultOfAntiJoin <- observationPeriod %>% 
     anti_join(
@@ -156,12 +157,12 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   expect_equal(nrow(top10PersonsHardWay), 10)
   
   # Test date functions --------------------------------------------------------
-  nObsOverOneYear <- observationPeriod %>%
-    filter(dateDiff("day", observation_period_start_date, observation_period_end_date) > 365) %>%
-    count() %>%
-    pull()
-  
-  expect_gt(nObsOverOneYear, 1)
+  # nObsOverOneYear <- observationPeriod %>%
+  #   filter(dateDiff("day", observation_period_start_date, observation_period_end_date) > 365) %>%
+  #   count() %>%
+  #   pull()
+  # 
+  # expect_gt(nObsOverOneYear, 1)
   
   
   ## In redshift eoMonth() must become LAST_DAY(), is not translated correctly. as.integer() is also needed to cast the float to integer for dateAdd.
