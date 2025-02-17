@@ -24,6 +24,52 @@ dbplyr_edition.DatabaseConnectorConnection <- function(con) {
 }
 
 #' @export
+#' @importFrom dbplyr sql_query_select
+sql_query_select.DatabaseConnectorJdbcConnection <- function(con,
+                                                             select,
+                                                             from,
+                                                             where = NULL,
+                                                             group_by = NULL,
+                                                             having = NULL,
+                                                             window = NULL,
+                                                             order_by = NULL,
+                                                             limit = NULL,
+                                                             distinct = FALSE,
+                                                             ...,
+                                                             subquery = FALSE,
+                                                             lvl = 0) {
+  switch(dbms(con),
+    "sql server" = utils::getFromNamespace("sql_query_select.Microsoft SQL Server", "dbplyr")(con,
+      select,
+      from,
+      where,
+      group_by,
+      having,
+      window,
+      order_by,
+      limit,
+      distinct,
+      ...,
+      subquery,
+      lvl),
+    "oracle" = utils::getFromNamespace("sql_query_select.Oracle", "dbplyr")(con,
+      select,
+      from,
+      where,
+      group_by,
+      having,
+      window,
+      order_by,
+      limit,
+      distinct,
+      ...,
+      subquery,
+      lvl),
+    rlang::abort("Sql dialect is not supported!")
+  )
+}
+
+#' @export
 #' @importFrom dbplyr sql_translation 
 sql_translation.DatabaseConnectorJdbcConnection <- function(con) {
   
