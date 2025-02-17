@@ -65,7 +65,7 @@ sql_query_select.DatabaseConnectorJdbcConnection <- function(con,
       ...,
       subquery,
       lvl),
-    rlang::abort("Sql dialect is not supported!")
+    NextMethod()  
   )
 }
 
