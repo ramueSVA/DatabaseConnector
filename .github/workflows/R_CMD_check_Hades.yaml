@@ -66,7 +66,7 @@ jobs:
       CDM_IRIS_CONNECTION_STRING: ${{ secrets.CDM_IRIS_CONNECTION_STRING }}
       CDM_IRIS_USER: ${{ secrets.CDM_IRIS_USER }}
       CDM_IRIS_PASSWORD: ${{ secrets.CDM_IRIS_PASSWORD }}
-      CDM_IRIS_CDM53_SCHEMA: ${{ secrets.CDM_IRIS_CDM53_SCHEMA }}
+      CDM_IRIS_CDM_SCHEMA: ${{ secrets.CDM_IRIS_CDM_SCHEMA }}
       CDM_IRIS_OHDSI_SCHEMA: ${{ secrets.CDM_IRIS_OHDSI_SCHEMA }}
       
 
