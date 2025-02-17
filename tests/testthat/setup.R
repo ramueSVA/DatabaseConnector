@@ -204,7 +204,7 @@ if (Sys.getenv("CDM_IRIS_CONNECTION_STRING") != "") {
       connectionString = Sys.getenv("CDM_IRIS_CONNECTION_STRING")
     ),
     NULL,
-    cdmDatabaseSchema = Sys.getenv("CDM_IRIS_CDM53_SCHEMA"),
+    cdmDatabaseSchema = Sys.getenv("CDM_IRIS_CDM_SCHEMA"),
     tempEmulationSchema = Sys.getenv("CDM_IRIS_OHDSI_SCHEMA")
   )
 }
