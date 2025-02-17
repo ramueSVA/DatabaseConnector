@@ -3,6 +3,7 @@ library(testthat)
 if (DatabaseConnector:::is_installed("ParallelLogger")) {
   options(LOG_DATABASECONNECTOR_SQL = TRUE)
   logFileName <- tempfile(fileext = ".txt")
+  file.create(logFileName)
   ParallelLogger::addDefaultFileLogger(logFileName, name = "TEST_LOGGER")
 }
 
@@ -44,11 +45,11 @@ data$big_ints[7] <- NA
 data$big_ints[8] <- 3.3043e+10
 data$booleans[c(3,9)] <- NA 
 
-testServer = testServers[[7]] 
+# testServer = testServers[[3]]
 
 for (testServer in testServers) {
   test_that(addDbmsToLabel("Insert data", testServer), {
-    skip_if(testServer$connectionDetails$dbms == "oracle") # Booleans are passed to and from Oracle but NAs are not persevered. still need to fix that.
+    # skip_if(testServer$connectionDetails$dbms == "oracle") # Booleans are passed to and from Oracle but NAs are not persevered. still need to fix that.
     if (testServer$connectionDetails$dbms %in% c("redshift", "bigquery")) {
       # Inserting on RedShift or BigQuery is slow (Without bulk upload), so 
       # taking subset:
@@ -57,9 +58,9 @@ for (testServer in testServers) {
       dataCopy1 <- data
     }
   
-    if (testServer$connectionDetails$dbms == "sqlite") {
+    if (testServer$connectionDetails$dbms %in% c("sqlite", "iris")) {
       # boolan types not suppoted on sqlite
-      dataCopy1$booleans <- NULL      
+      dataCopy1$booleans <- NULL    
     }
     
     connection <- connect(testServer$connectionDetails)
@@ -96,8 +97,9 @@ for (testServer in testServers) {
     attr(dataCopy2$some_datetime, "tzone") <- NULL
     expect_equal(dataCopy1, dataCopy2, check.attributes = FALSE, tolerance = 1e-7)
     
+    sql <- SqlRender::translate("SELECT * FROM #temp;", targetDialect = dbms(connection))
     # Check data types
-    res <- dbSendQuery(connection, "SELECT * FROM #temp;")
+    res <- dbSendQuery(connection, sql, translate = FALSE)
     columnInfo <- dbColumnInfo(res)
     dbClearResult(res)
     dbms <- testServer$connectionDetails$dbms
@@ -112,13 +114,13 @@ for (testServer in testServers) {
     } else if (dbms == "sqlite") {
       expect_equal(as.character(columnInfo$type), c("double", "double", "integer", "double", "character", "double"))
     } else if (dbms == "duckdb") {
-      expect_equal(as.character(columnInfo$type), c("Date", "POSIXct", "integer", "numeric", "character", "numeric"))
+      expect_equal(as.character(columnInfo$type), c("Date", "POSIXct", "integer", "numeric", "character", "numeric", "logical"))
     } else if (dbms == "snowflake") {
       expect_equal(as.character(columnInfo$field.type), c("DATE", "TIMESTAMPNTZ", "NUMBER", "DOUBLE", "VARCHAR", "NUMBER", "BOOLEAN"))
     } else if (dbms == "spark") {
       expect_equal(as.character(columnInfo$field.type), c("DATE", "TIMESTAMP", "INT", "FLOAT", "STRING", "BIGINT", "BOOLEAN"))
     } else if (dbms == "bigquery") {
-      expect_equal(as.character(columnInfo$field.type), c("DATE", "DATETIME", "INT64", "FLOAT64", "STRING", "INT64"))
+      expect_equal(as.character(columnInfo$field.type), c("DATE", "DATETIME", "INT64", "FLOAT64", "STRING", "INT64", "BOOLEAN"))
     } else if (dbms == "iris") {
       expect_equal(as.character(columnInfo$field.type), c("DATE", "TIMESTAMP", "INTEGER", "DOUBLE", "VARCHAR", "BIGINT"))
     } else {
