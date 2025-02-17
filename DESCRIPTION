@@ -21,7 +21,7 @@ Depends:
     R (>= 4.0.0)
 Imports:
     rJava,
-    SqlRender (>= 1.19.1),
+    SqlRender (>= 1.19.2),
     methods,
     stringr,
     readr,
@@ -51,6 +51,8 @@ Suggests:
     pool,
     ParallelLogger,
     AzureStor
+Remotes:
+  ohdsi/SqlRender
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/DatabaseConnector/, https://github.com/OHDSI/DatabaseConnector

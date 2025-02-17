@@ -139,7 +139,7 @@ for (i in seq_along(toTableNames)) {
 }
 
 # Create indices:
-sql <- readLines("https://raw.githubusercontent.com/OHDSI/CommonDataModel/v5.4.0/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_indices.sql")
+sql <- readLines("https://raw.githubusercontent.com/OHDSI/CommonDataModel/v5.4.0/inst/ddl/5.4/sql_server/OMOPCDM_sql_server_5.4_indices.sql")
 sql <- sql[!grepl("note_nlp", sql)]
 
 renderTranslateExecuteSql(
