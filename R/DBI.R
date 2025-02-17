@@ -267,7 +267,7 @@ setMethod(
 setMethod(
   "dbSendQuery",
   signature("DatabaseConnectorDbiConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
+  function(conn, statement, translate = FALSE, ...) {
     if (translate) {
       statement <- translateStatement(
         sql = statement,
@@ -435,7 +435,7 @@ setMethod("dbGetRowsAffected", "DatabaseConnectorDbiResult", function(res, ...) 
 setMethod(
   "dbGetQuery",
   signature("DatabaseConnectorConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
+  function(conn, statement, translate = FALSE, ...) {
     if (translate) {
       statement <- translateStatement(
         sql = statement,
@@ -456,7 +456,7 @@ setMethod(
 setMethod(
   "dbSendStatement",
   signature("DatabaseConnectorConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
+  function(conn, statement, translate = FALSE, ...) {
     if (translate) {
       statement <- translateStatement(
         sql = statement,
@@ -481,7 +481,7 @@ setMethod(
 setMethod(
   "dbExecute",
   signature("DatabaseConnectorConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
+  function(conn, statement, translate = FALSE, ...) {
     if (isDbplyrSql(statement) && dbms(conn) %in% c("oracle", "bigquery", "spark", "hive") && grepl("^UPDATE STATISTICS", statement)) {
       # These platforms don't support this, so SqlRender translates to an empty string, which causes errors down the line.
       return(0)
