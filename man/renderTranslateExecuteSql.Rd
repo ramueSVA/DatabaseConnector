@@ -45,8 +45,6 @@ emulate temp tables, provide a schema with write privileges where temp tables
 can be created.}
 
 \item{...}{Parameters that will be used to render the SQL.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 }
 \description{
 This function renders, translates, and executes SQL consisting of one or more statements.

@@ -42,8 +42,6 @@ can be created.}
 \item{...}{Other parameters passed on to methods.}
 
 \item{row.names}{Must be \code{NULL}.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 }
 \value{
 \code{dbAppendTable()} returns a

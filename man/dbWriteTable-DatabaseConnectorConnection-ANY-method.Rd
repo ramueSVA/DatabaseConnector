@@ -45,8 +45,6 @@ emulate temp tables, provide a schema with write privileges where temp tables
 can be created.}
 
 \item{...}{Other parameters passed on to methods.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 }
 \value{
 \code{dbWriteTable()} returns \code{TRUE}, invisibly.

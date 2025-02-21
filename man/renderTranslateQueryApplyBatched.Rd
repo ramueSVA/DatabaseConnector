@@ -43,8 +43,6 @@ can be created.}
 64-bit integers will be represented using \code{bit64::integer64}.}
 
 \item{...}{Parameters that will be used to render the SQL.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 }
 \value{
 Invisibly returns a list of outputs from each call to the provided function.

@@ -6,3 +6,5 @@ R/LocalEnvironment.R
 /DatabaseConnector.iml
 .idea/
 errorReportSql.txt
+/work/
+.settings/org.eclipse.core.resources.prefs

@@ -49,8 +49,6 @@ can be created.}
 \item{row.names}{Must be \code{NULL}.}
 
 \item{temporary}{Should the table created as a temp table?}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 }
 \value{
 \code{dbCreateTable()} returns \code{TRUE}, invisibly.

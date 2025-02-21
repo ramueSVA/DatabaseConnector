@@ -49,8 +49,6 @@ requirements for the various platforms.}
 
 \item{camelCaseToSnakeCase}{If TRUE, the data frame column names are assumed to use camelCase and
 are converted to snake_case before uploading.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 }
 \description{
 This function sends the data in a data frame to a table on the server. Either a new table
