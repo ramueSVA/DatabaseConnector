@@ -3,7 +3,7 @@ library(DatabaseConnector)
 source("dbplyrTestFunction.R")
 
 for (testServer in testServers) {
-  if (testServer != "iris") { # some dbplyr translations fail for iris
+  if (testServer$connectionDetails['dbms'] != "iris") { # some dbplyr translations fail for iris
     test_that(addDbmsToLabel("Test dbplyr", testServer), {
       options(sqlRenderTempEmulationSchema = testServer$tempEmulationSchema)
       testDbplyrFunctions(connectionDetails = testServer$connectionDetails,
