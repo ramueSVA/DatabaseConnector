@@ -1,24 +1,26 @@
-#' #' @export sql_values_subquery
-#' #' @export
-#' sql_values_subquery <- function(con, df, types, lvl = 0, ...){
-#'   check_dots_used()
-#'   UseMethod("sql_values_subquery")
-#' }
-#' 
-#' #' @export sql_values_subquery.DatabaseConnectorJdbcConnection
-#' #' @export
-#' sql_values_subquery.DatabaseConnectorJdbcConnection <- function(con, df, types, lvl = 0, ...) {
-#'   if(dbms(con) == "redshift"){
-#'     return(utils::getFromNamespace("sql_values_subquery.RedshiftConnection", "dbplyr")(con = con, df = df, types = types, lvl = lvl, ...))
-#'   }
-#'   else{
-#'     return(utils::getFromNamespace("sql_values_subquery.DBIConnection", "dbplyr")(con = con, df = df, types = types, lvl = lvl, ...))
-#'   }
-#' }
+# #' @export sql_values_subquery
+# #' @export
+# sql_values_subquery <- function(con, df, types, lvl = 0, ...){
+#   check_dots_used()
+#   UseMethod("sql_values_subquery")
+# }
+# 
+# #' @export sql_values_subquery.DatabaseConnectorJdbcConnection
+# #' @export
+# sql_values_subquery.DatabaseConnectorJdbcConnection <- function(con, df, types, lvl = 0, ...) {
+#   if(dbms(con) == "redshift"){
+#     return(utils::getFromNamespace("sql_values_subquery.RedshiftConnection", "dbplyr")(con = con, df = df, types = types, lvl = lvl, ...))
+#   }
+#   else{
+#     return(utils::getFromNamespace("sql_values_subquery.DBIConnection", "dbplyr")(con = con, df = df, types = types, lvl = lvl, ...))
+#   }
+# }
 
 
 #' @export
 #' @importFrom dbplyr dbplyr_edition
+#' 
+#' @param con Database connection 
 dbplyr_edition.DatabaseConnectorConnection <- function(con) {
   2L
 }
