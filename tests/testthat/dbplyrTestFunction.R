@@ -49,7 +49,7 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
 
   # Test copy_inline -----------------------------------------------------------
   # wrong translation, we can solve it locally (see backend-DatabaseConnector, commented out lines), but solution needs to be included in dbplyr 
-  if (!(dbms(connection) %in% c("redshift", "oracle", "sql server", "snowflake"))) {
+  if (!(dbms(connection) %in% c("redshift", "oracle", "sql server", "snowflake", "bigquery"))) {
     rows <- dbplyr::copy_inline(connection, mtcars) %>%
       filter(hp > 200) %>%
       arrange(wt, mpg) %>%
@@ -81,7 +81,7 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   
   # Test creation of temp tables -----------------------------------------------
   # issues with temp emulation with oracle and sql server when Analyze happens as part of copy_to
-  if (!(dbms(connection) %in% c("oracle", "sql server", "snowflake"))) {
+  if (!(dbms(connection) %in% c("oracle", "sql server", "snowflake", "spark"))) {
     cars2 <- copy_to(connection, cars, overwrite = TRUE)
     cars2 <- cars2 %>% collect()
     expect_equivalent(arrange(cars, speed, dist), arrange(cars2, speed, dist))
