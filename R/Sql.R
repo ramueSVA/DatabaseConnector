@@ -558,6 +558,7 @@ trySettingAutoCommit <- function(connection, value) {
 #' @template ErrorReportFile
 #' @template SnakeCaseToCamelCase
 #' @template IntegerAsNumeric
+#' @template DataTypeConversion
 #'
 #' @details
 #' This function sends the SQL to the server and retrieves the results. If an error occurs during SQL
@@ -708,6 +709,7 @@ renderTranslateExecuteSql <- function(connection,
 #' @template SnakeCaseToCamelCase
 #' @template TempEmulationSchema
 #' @template IntegerAsNumeric
+#' @template DataTypeConversion
 #' @param ...                  Parameters that will be used to render the SQL.
 #'
 #' @details
@@ -810,6 +812,7 @@ isSqlReservedWord <- function(sqlNames, warn = FALSE) {
 #' @template SnakeCaseToCamelCase
 #' @template TempEmulationSchema
 #' @template IntegerAsNumeric
+#' @template DataTypeConversion
 #' @param ...                  Parameters that will be used to render the SQL.
 #'
 #' @details
