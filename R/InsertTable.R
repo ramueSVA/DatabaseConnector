@@ -287,16 +287,10 @@ insertTable.default <- function(connection,
     )
   }
   
-  if (createTable && !useCtasHack) {
-    # temporary translation for boolean types. move this to sql render.
-    # if (dbms == "sql server") {
-    #   print("custom translation")
-    #   sqlTableDefinition <- gsub("BOOLEAN", "BIT", sqlTableDefinition)
-    #   print(sqlTableDefinition)
-    # }
+  if (createTable && !useCtasHack && !(bulkLoad && dbms == "hive")) {
     
     sql <- paste("CREATE TABLE ", sqlTableName, " (", sqlTableDefinition, ");", sep = "")
-    print(sql)
+ 
     renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -314,6 +308,10 @@ insertTable.default <- function(connection,
     inform("Attempting to use bulk loading...")
     if (dbms == "redshift") {
       bulkLoadRedshift(connection, sqlTableName, data)
+    } else if (dbms == "pdw") {
+      bulkLoadPdw(connection, sqlTableName, sqlDataTypes, data)
+    } else if (dbms == "hive") {
+      bulkLoadHive(connection, sqlTableName, sqlFieldNames, data)
     } else if (dbms == "postgresql") {
       bulkLoadPostgres(connection, sqlTableName, sqlFieldNames, sqlDataTypes, data)
     } else if (dbms == "spark") {
