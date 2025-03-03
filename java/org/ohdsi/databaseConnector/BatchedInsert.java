@@ -237,9 +237,6 @@ public class BatchedInsert {
 	
 	public void setBoolean(int columnIndex, int[] column) {
 		// represent boolean as int 1 for true, 0 for false, -1 for NA
-		// should we use byte type instead of integer? I also tried the Boolean wrapper class but
-		// could not get rJava to pass the boolean type to java as Boolean[]
-		// seems better to pass int type to and from R
 		columns[columnIndex - 1] = column;
 		columnTypes[columnIndex - 1] = BOOLEAN;
 		rowCount = column.length;
