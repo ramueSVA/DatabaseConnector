@@ -20,7 +20,8 @@ for (testServer in testServers) {
       renderTranslateExecuteSql(connection, createSql)
       expect_equal(renderTranslateExecuteSql(connection, sql, runAsBatch = TRUE), c(1, 1, 0))
       renderTranslateExecuteSql(connection, createSql)
-      rowsAffected <- dbSendStatement(connection, sql, translate = TRUE)
+      translatedSql <- SqlRender::translate(sql, dbms(connection))
+      rowsAffected <- dbSendStatement(connection, translatedSql)
       expect_equal(dbGetRowsAffected(rowsAffected), 2)
       dbClearResult(rowsAffected)
     }
