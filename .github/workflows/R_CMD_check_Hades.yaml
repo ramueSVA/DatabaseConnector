@@ -68,7 +68,6 @@ jobs:
       CDM_IRIS_PASSWORD: ${{ secrets.CDM_IRIS_PASSWORD }}
       CDM_IRIS_CDM_SCHEMA: ${{ secrets.CDM_IRIS_CDM_SCHEMA }}
       CDM_IRIS_OHDSI_SCHEMA: ${{ secrets.CDM_IRIS_OHDSI_SCHEMA }}
-      
 
     steps:
       - uses: actions/checkout@v4

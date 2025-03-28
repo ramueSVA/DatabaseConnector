@@ -48,6 +48,7 @@ Suggests:
     RPostgres,
     odbc,
     duckdb,
+    bigrquery,
     pool,
     ParallelLogger,
     AzureStor

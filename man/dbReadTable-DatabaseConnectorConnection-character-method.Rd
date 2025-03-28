@@ -8,13 +8,12 @@
   conn,
   name,
   databaseSchema = NULL,
-  oracleTempSchema = NULL,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   ...
 )
 }
 \arguments{
-\item{conn}{A \link[DBI:DBIConnection-class]{DBIConnection} object, as returned by
+\item{conn}{A \linkS4class{DBIConnection} object, as returned by
 \code{\link[DBI:dbConnect]{dbConnect()}}.}
 
 \item{name}{The table name, passed on to \code{\link[DBI:dbQuoteIdentifier]{dbQuoteIdentifier()}}. Options are:
@@ -28,8 +27,6 @@ given verbatim, e.g. \code{SQL('"my_schema"."table_name"')}
 }}
 
 \item{databaseSchema}{The name of the database schema. See details for platform-specific details.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To
 emulate temp tables, provide a schema with write privileges where temp tables
@@ -72,6 +69,7 @@ a column to row names and converting the column names to valid
 R identifiers.
 Use \code{\link[DBI:dbReadTableArrow]{dbReadTableArrow()}} instead to obtain an Arrow object.
 
+\Sexpr[results=rd,stage=render]{DBI:::methods_as_rd("dbReadTable")}
 }
 \details{
 The \code{databaseSchema} argument is interpreted differently according to the different platforms:

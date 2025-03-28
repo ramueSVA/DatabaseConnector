@@ -12,7 +12,6 @@ renderTranslateQuerySqlToAndromeda(
   errorReportFile = file.path(getwd(), "errorReportSql.txt"),
   snakeCaseToCamelCase = FALSE,
   appendToTable = FALSE,
-  oracleTempSchema = NULL,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
   integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
@@ -39,8 +38,6 @@ Defaults to 'errorReportSql.txt' in the current working directory.}
 \item{appendToTable}{If FALSE, any existing table in the Andromeda with the same name will be
 replaced with the new data. If TRUE, data will be appended to an existing
 table, assuming it has the exact same structure.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To
 emulate temp tables, provide a schema with write privileges where temp tables
