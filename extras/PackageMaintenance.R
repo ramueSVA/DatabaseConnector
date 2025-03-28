@@ -86,7 +86,7 @@ executeSql(connection, sql)
 
 databaseSchema <- Sys.getenv("CDM5_ORACLE_CDM54_SCHEMA")
 tables <- getTableNames(connection, databaseSchema, cast = "none")
-tables <- tables[grepl("_stats$|_counts$|groups$|prep$|_prep2|_sets$|_ref$|_data$|oc$", tables)]
+tables <- tables[grepl("_stats$|_counts$|groups$|prep$|_prep2|_sets$|_ref$|_data$|oc$|_ids$|exp$|time_period$|.+death$", tables)]
 sql <- paste(sprintf("DROP TABLE %s.%s;", databaseSchema, tables), collapse= "\n")
 executeSql(connection, sql)
 

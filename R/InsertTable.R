@@ -198,18 +198,18 @@ insertTable <- function(connection,
 }
 
 #' @export
-insertTable.default <- function(connection,
-                                databaseSchema = NULL,
-                                tableName,
-                                data,
-                                dropTableIfExists = TRUE,
-                                createTable = TRUE,
-                                tempTable = FALSE,
-                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                                bulkLoad = Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD"),
-                                useMppBulkLoad = Sys.getenv("USE_MPP_BULK_LOAD"),
-                                progressBar = FALSE,
-                                camelCaseToSnakeCase = FALSE) {
+insertTable.DatabaseConnectorJdbcConnection <- function(connection,
+                                                       databaseSchema = NULL,
+                                                       tableName,
+                                                       data,
+                                                       dropTableIfExists = TRUE,
+                                                       createTable = TRUE,
+                                                       tempTable = FALSE,
+                                                       tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+                                                       bulkLoad = Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD"),
+                                                       useMppBulkLoad = Sys.getenv("USE_MPP_BULK_LOAD"),
+                                                       progressBar = FALSE,
+                                                       camelCaseToSnakeCase = FALSE) {
   if (is(connection, "Pool")) {
     connection <- pool::poolCheckout(connection)
     on.exit(pool::poolReturn(connection))
@@ -290,7 +290,7 @@ insertTable.default <- function(connection,
   if (createTable && !useCtasHack && !(bulkLoad && dbms == "hive")) {
     
     sql <- paste("CREATE TABLE ", sqlTableName, " (", sqlTableDefinition, ");", sep = "")
- 
+    
     renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -380,7 +380,6 @@ insertTable.default <- function(connection,
           } else  if (is.logical(column)) {
             # encode column as -1 (NA), 1 (TRUE), 0 (FALSE) to pass logical NAs into Java 
             column <- vapply(as.integer(column), FUN = function(x) ifelse(is.na(x), -1L, x), FUN.VALUE = integer(1L))
-            print(class(column))
             rJava::.jcall(batchedInsert, "V", "setBoolean", i, column)
           } else {
             rJava::.jcall(batchedInsert, "V", "setString", i, as.character(column))
@@ -415,7 +414,36 @@ insertTable.DatabaseConnectorDbiConnection <- function(connection,
                                                        useMppBulkLoad = Sys.getenv("USE_MPP_BULK_LOAD"),
                                                        progressBar = FALSE,
                                                        camelCaseToSnakeCase = FALSE) {
+  insertTable(
+    connection = connection@dbiConnection,
+    databaseSchema = databaseSchema,
+    tableName = tableName,
+    data = data,
+    dropTableIfExists = dropTableIfExists,
+    createTable = createTable,
+    tempTable = tempTable,
+    tempEmulationSchema = tempEmulationSchema,
+    bulkLoad = bulkLoad,
+    useMppBulkLoad = useMppBulkLoad,
+    progressBar = progressBar,
+    camelCaseToSnakeCase = camelCaseToSnakeCase
+  )
+}
 
+#' @export
+insertTable.default <- function(connection,
+                                databaseSchema = NULL,
+                                tableName,
+                                data,
+                                dropTableIfExists = TRUE,
+                                createTable = TRUE,
+                                tempTable = FALSE,
+                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+                                bulkLoad = Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD"),
+                                useMppBulkLoad = Sys.getenv("USE_MPP_BULK_LOAD"),
+                                progressBar = FALSE,
+                                camelCaseToSnakeCase = FALSE) {
+  
   if (camelCaseToSnakeCase) {
     colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   }
@@ -468,7 +496,7 @@ insertTable.DatabaseConnectorDbiConnection <- function(connection,
   
   startTime <- Sys.time()
   DBI::dbWriteTable(
-    conn = connection@dbiConnection,
+    conn = connection,
     name = tableName,
     value = data,
     overwrite = dropTableIfExists,

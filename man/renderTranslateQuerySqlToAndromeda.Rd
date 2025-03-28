@@ -57,7 +57,7 @@ results.
 }
 \description{
 This function renders, and translates SQL, sends it to the server, and returns the results as an
-ffdf object
+\code{Andromeda} object
 }
 \details{
 This function calls the \code{render} and \code{translate} functions in the \code{SqlRender} package

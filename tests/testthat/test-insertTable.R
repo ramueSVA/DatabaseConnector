@@ -89,8 +89,6 @@ for (testServer in testServers) {
     names(dataCopy2) <- tolower(names(dataCopy2))
     dataCopy1 <- dataCopy1[order(dataCopy1$person_id), ]
     dataCopy2 <- dataCopy2[order(dataCopy2$person_id), ]
-    dplyr::tibble(dataCopy1)
-    dplyr::tibble(dataCopy2)
     row.names(dataCopy1) <- NULL
     row.names(dataCopy2) <- NULL
     attr(dataCopy1$some_datetime, "tzone") <- NULL

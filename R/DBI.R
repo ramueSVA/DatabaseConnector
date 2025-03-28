@@ -144,38 +144,38 @@ setMethod("dbGetInfo", "DatabaseConnectorConnection", function(dbObj, ...) {
   return(list(db.version = "15.0"))
 })
 
-setMethod("dbQuoteIdentifier", signature("DatabaseConnectorConnection", "character"), function(conn,
-                                                                                               x, ...) {
-  if (length(x) == 0L) {
-    return(DBI::SQL(character()))
-  }
-  if (any(is.na(x))) {
-    abort("Cannot pass NA to dbQuoteIdentifier()")
-  }
-  if (nzchar(conn@identifierQuote)) {
-    x <- gsub(conn@identifierQuote, paste0(
-      conn@identifierQuote,
-      conn@identifierQuote
-    ), x, fixed = TRUE)
-  }
-  return(DBI::SQL(paste0(conn@identifierQuote, encodeString(x), conn@identifierQuote)))
-})
+setMethod("dbQuoteIdentifier", 
+          signature("DatabaseConnectorConnection", "character"), 
+          function(conn, x, ...) {
+            if (length(x) == 0L) {
+              return(DBI::SQL(character()))
+            }
+            if (any(is.na(x))) {
+              abort("Cannot pass NA to dbQuoteIdentifier()")
+            }
+            if (nzchar(conn@identifierQuote)) {
+              x <- gsub(conn@identifierQuote, paste0(
+                conn@identifierQuote,
+                conn@identifierQuote
+              ), x, fixed = TRUE)
+            }
+            return(DBI::SQL(paste0(conn@identifierQuote, encodeString(x), conn@identifierQuote)))
+          })
 
-setMethod(
-  "dbQuoteString",
-  signature("DatabaseConnectorConnection", "character"),
-  function(conn, x, ...) {
-    if (length(x) == 0L) {
-      return(DBI::SQL(character()))
-    }
-    if (any(is.na(x))) {
-      abort("Cannot pass NA to dbQuoteString()")
-    }
-    if (nzchar(conn@stringQuote)) {
-      x <- gsub(conn@stringQuote, paste0(conn@stringQuote, conn@stringQuote), x, fixed = TRUE)
-    }
-    return(DBI::SQL(paste0(conn@stringQuote, encodeString(x), conn@stringQuote)))
-  }
+setMethod("dbQuoteString", 
+          signature("DatabaseConnectorConnection", "character"),
+          function(conn, x, ...) {
+            if (length(x) == 0L) {
+              return(DBI::SQL(character()))
+            }
+            if (any(is.na(x))) {
+              abort("Cannot pass NA to dbQuoteString()")
+            }
+            if (nzchar(conn@stringQuote)) {
+              x <- gsub(conn@stringQuote, paste0(conn@stringQuote, conn@stringQuote), x, fixed = TRUE)
+            }
+            return(DBI::SQL(paste0(conn@stringQuote, encodeString(x), conn@stringQuote)))
+          }
 )
 
 # Results -----------------------------------------------------------------------------------------
@@ -210,66 +210,27 @@ setClass("DatabaseConnectorDbiResult",
 #' @inherit DBI::dbSendQuery title description params details references return seealso
 #' 
 #' @export
-setMethod(
-  "dbSendQuery",
-  signature("DatabaseConnectorJdbcConnection", "character"),
-  function(conn, statement, ...) {
-    if (rJava::is.jnull(conn@jConnection)) {
-      abort("Connection is closed")
-    }
-    logTrace(paste("Sending SQL:", truncateSql(statement)))
-    startTime <- Sys.time()
-    
-    dbms <- dbms(conn)
-
-    # For Oracle, remove trailing semicolon:
-    statement <- gsub(";\\s*$", "", statement)
-    tryCatch(
-      batchedQuery <- rJava::.jnew(
-        "org.ohdsi.databaseConnector.BatchedQuery",
-        conn@jConnection,
-        statement,
-        dbms
-      ),
-      error = function(error) {
-        # Rethrowing error to avoid 'no field, method or inner class called 'use_cli_format''
-        # error by rlang (see https://github.com/OHDSI/DatabaseConnector/issues/235)
-        rlang::abort(error$message)
-      }
-    )
-    
-    result <- new("DatabaseConnectorJdbcResult",
-                  content = batchedQuery,
-                  type = "batchedQuery",
-                  statement = statement,
-                  dbms = dbms
-    )
-    delta <- Sys.time() - startTime
-    logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-    return(result)
-  }
+setMethod("dbSendQuery",
+          signature("DatabaseConnectorJdbcConnection", "character"),
+          function(conn, statement, ...) {
+            result <- lowLevelDbSendQuery(conn, statement)
+            return(result)
+          }
 )
 
 #' @inherit DBI::dbSendQuery title description params details references return seealso
 #' 
 #' @export
-setMethod(
-  "dbSendQuery",
-  signature("DatabaseConnectorDbiConnection", "character"),
-  function(conn, statement, ...) {
-    logTrace(paste("Sending SQL:", truncateSql(statement)))
-    startTime <- Sys.time()
-    
-    resultSet <- DBI::dbSendQuery(conn@dbiConnection, statement, ...)
-    result <- new("DatabaseConnectorDbiResult",
-                  resultSet = resultSet,
-                  dbms = dbms(conn)
-    )
-    
-    delta <- Sys.time() - startTime
-    logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-    return(result)
-  }
+setMethod("dbSendQuery",
+          signature("DatabaseConnectorDbiConnection", "character"),
+          function(conn, statement, ...) {
+            resultSet <- DBI::dbSendQuery(conn@dbiConnection, statement, ...)
+            result <- new("DatabaseConnectorDbiResult",
+                          resultSet = resultSet,
+                          dbms = dbms(conn)
+            )
+            return(result)
+          }
 )
 
 #' @inherit DBI::dbHasCompleted title description params details references return seealso
@@ -334,30 +295,22 @@ setMethod("dbGetRowCount", "DatabaseConnectorDbiResult", function(res, ...) {
 #' @inherit DBI::dbFetch title description params details references return seealso
 #' @export
 setMethod("dbFetch", "DatabaseConnectorJdbcResult", function(res, n = -1, ...) {
+  # Using n == DBFETCH_BATCH_SIZE as signal to fetch as many as fits in memory:
   tryCatch({
-    if (n == -1 | is.infinite(n)) {
-      columns <- getAllBatches(batchedQuery = res@content,
-                               datesAsString = FALSE,
-                               integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                              default = TRUE),
-                               integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                            default = TRUE))
+    if (n != DBFETCH_BATCH_SIZE & (n == -1 | is.infinite(n))) {
+      results <- getAllBatches(res@content)
     } else {
-      warn("The 'n' argument is set to something other than -1 or Inf, and will be ignored. Fetching as many rows as fits in the Java VM.",
-           .frequency = "regularly",
-           .frequency_id = "dbFetchN"
-      )
+      if (n != DBFETCH_BATCH_SIZE) {
+        warn("The 'n' argument is set to something other than -1 or Inf, and will be ignored. Fetching as many rows as fits in the Java VM.",
+             .frequency = "regularly",
+             .frequency_id = "dbFetchN"
+        )
+      }
       rJava::.jcall(res@content, "V", "fetchBatch")
-      columns <- parseJdbcColumnData(batchedQuery = res@content,
-                                     datesAsString = FALSE,
-                                     integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                    default = TRUE),
-                                     integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                  default = TRUE))
+      results <- parseJdbcColumnData(batchedQuery = res@content)
     }
-    columns <- convertFields(res@dbms, columns)
-    colnames(columns) <- tolower(colnames(columns))
-    return(columns)
+    colnames(results) <- tolower(colnames(results))
+    return(results)
   },
   error = function(error) {
     # Rethrowing error to avoid 'no field, method or inner class called 'use_cli_format'  
@@ -370,9 +323,6 @@ setMethod("dbFetch", "DatabaseConnectorJdbcResult", function(res, n = -1, ...) {
 #' @export
 setMethod("dbFetch", "DatabaseConnectorDbiResult", function(res, n = -1, ...) {
   columns <- DBI::dbFetch(res@resultSet, n, ...)
-  columns <- convertFields(res@dbms, columns)
-  columns <- dbFetchIntegerToNumeric(columns)
-  colnames(columns) <- tolower(colnames(columns))
   return(columns)
 })
 
@@ -413,12 +363,26 @@ setMethod("dbGetRowsAffected", "DatabaseConnectorDbiResult", function(res, ...) 
 #' @inherit DBI::dbGetQuery title description params details references return seealso
 #' 
 #' @export
+setMethod("dbGetQuery",
+          signature("DatabaseConnectorJdbcConnection", "character"),
+          function(conn, statement, ...) {
+            if (!DBI::dbIsValid(conn)) {
+              abort("Connection is closed")
+            }
+            resultSet <- DBI::dbSendQuery(conn, statement)
+            results <- DBI::dbFetch(resultSet)
+            return(results)
+          }
+)
+
+#' @inherit DBI::dbGetQuery title description params details references return seealso
+#' 
+#' @export
 setMethod(
   "dbGetQuery",
-  signature("DatabaseConnectorConnection", "character"),
+  signature("DatabaseConnectorDbiConnection", "character"),
   function(conn, statement, ...) {
-    result <- querySql(conn, statement)
-    colnames(result) <- tolower(colnames(result))
+    result <- DBI::dbGetQuery(conn@dbiConnection, statement)
     return(result)
   }
 )
@@ -430,8 +394,8 @@ setMethod(
   "dbSendStatement",
   signature("DatabaseConnectorConnection", "character"),
   function(conn, statement, ...) {
-    rowsAffected <- executeSql(connection = conn, sql = statement)
-    rowsAffected <- rJava::.jnew("java/lang/Double", as.double(sum(rowsAffected)))
+    rowsAffected <- DBI::dbExecute(conn, statement)
+    rowsAffected <- rJava::.jnew("java/lang/Double", as.double(rowsAffected))
     result <- new("DatabaseConnectorJdbcResult",
                   content = rowsAffected,
                   type = "rowsAffected",
@@ -445,12 +409,26 @@ setMethod(
 #' @export
 setMethod(
   "dbExecute",
-  signature("DatabaseConnectorConnection", "character"),
+  signature("DatabaseConnectorJdbcConnection", "character"),
   function(conn, statement, ...) {
     rowsAffected <- 0
-    for (sql in SqlRender::splitSql(statement)) {
-      rowsAffected <- rowsAffected + executeSql(conn, sql)
+    statements <- SqlRender::splitSql(statement)
+    if (length(statements) < 1) {
+      warn("Ignoring remaining part of query: ", paste(statements[2:length(statements)], collapse = " "))
     }
+    rowsAffected <- rowsAffected + lowLevelExecuteSql(conn, statements[1])
+    return(rowsAffected)
+  }
+)
+
+#' @inherit DBI::dbExecute title description params details references return seealso
+#' 
+#' @export
+setMethod(
+  "dbExecute",
+  signature("DatabaseConnectorDbiConnection", "character"),
+  function(conn, statement, ...) {
+    rowsAffected <- DBI::dbExecute(conn@dbiConnection, statement)
     return(rowsAffected)
   }
 )
@@ -510,7 +488,7 @@ setMethod(
   "DatabaseConnectorConnection",
   function(conn,
            name, value, databaseSchema = NULL, overwrite = FALSE, append = FALSE, temporary = FALSE, ...) {
-
+    
     if (overwrite) {
       append <- FALSE
     }
@@ -538,7 +516,7 @@ setMethod(
   signature("DatabaseConnectorConnection", "character"),
   function(conn,
            name, value, databaseSchema = NULL, temporary = FALSE, ..., row.names = NULL) {
-
+    
     insertTable(
       connection = conn,
       databaseSchema = databaseSchema,
@@ -563,7 +541,7 @@ setMethod(
   "DatabaseConnectorConnection",
   function(conn,
            name, fields, databaseSchema = NULL, ..., row.names = NULL, temporary = FALSE) {
-
+    
     insertTable(
       connection = conn, 
       databaseSchema = databaseSchema,
@@ -588,13 +566,13 @@ setMethod("dbReadTable",
                    name,
                    databaseSchema = NULL,
                    ...) {
-
+            
             if (!is.null(databaseSchema)) {
               name <- paste(databaseSchema, name, sep = ".")
             }
             sql <- "SELECT * FROM @table;"
             sql <- SqlRender::render(sql = sql, table = name)
-            return(querySql(conn, sql))
+            return(DBI::dbGetQuery(conn, sql))
           })
 
 #' @inherit DBI::dbRemoveTable title description params details references return seealso
@@ -607,15 +585,13 @@ setMethod(
   "DatabaseConnectorConnection",
   function(conn, name,
            databaseSchema = NULL, ...) {
-
+    
     if (!is.null(databaseSchema)) {
       name <- paste(databaseSchema, name, sep = ".")
     }
     sql <- "TRUNCATE TABLE @table; DROP TABLE @table;"
     sql <- SqlRender::render(sql = sql, table = name)
-     for (statement in SqlRender::splitSql(sql)) {
-      executeSql(conn, statement)
-    }
+    DBI::dbExecute(conn, sql)
     return(TRUE)
   }
 )
@@ -680,22 +656,4 @@ splitDatabaseSchema <- function(databaseSchema, dbms) {
   } else {
     return(list(NULL, databaseSchema))
   }
-}
-
-dbFetchIntegerToNumeric <- function(columns) {
-  if (getOption("databaseConnectorIntegerAsNumeric", default = TRUE)) {
-    for (i in seq_len(ncol(columns))) {
-      if (is(columns[[i]], "integer")) {
-        columns[[i]] <- as.numeric(columns[[i]])
-      }
-    }
-  }
-  if (getOption("databaseConnectorInteger64AsNumeric", default = TRUE)) {
-    for (i in seq_len(ncol(columns))) {
-      if (is(columns[[i]], "integer64")) {
-        columns[[i]] <- convertInteger64ToNumeric(columns[[i]])
-      }
-    }
-  }
-  return(columns)
 }

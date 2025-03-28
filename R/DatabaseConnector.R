@@ -79,3 +79,5 @@ NULL
 NULL
 
 globalVars <- new.env()
+
+DBFETCH_BATCH_SIZE <- 9999
