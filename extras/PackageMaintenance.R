@@ -86,7 +86,7 @@ executeSql(connection, sql)
 
 databaseSchema <- Sys.getenv("CDM5_ORACLE_CDM54_SCHEMA")
 tables <- getTableNames(connection, databaseSchema, cast = "none")
-tables <- tables[grepl("", tables)]
+tables <- tables[grepl("_stats$|_counts$|groups$|prep$|_prep2|_sets$|_ref$|_data$|oc$", tables)]
 sql <- paste(sprintf("DROP TABLE %s.%s;", databaseSchema, tables), collapse= "\n")
 executeSql(connection, sql)
 
@@ -133,6 +133,19 @@ connection <- connect(
   server = Sys.getenv("CDM5_REDSHIFT_SERVER")
 )
 databaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
+tables <- getTableNames(connection, databaseSchema)
+sql <- paste(sprintf("DROP TABLE %s.\"%s\" CASCADE;", databaseSchema, tables), collapse= "\n")
+executeSql(connection, sql)
+disconnect(connection)
+
+# IRIS
+connection <- connect(
+  dbms = "iris",
+  user = Sys.getenv("CDM_IRIS_USER"),
+  password = URLdecode(Sys.getenv("CDM_IRIS_PASSWORD")),
+  connectionString = Sys.getenv("CDM_IRIS_CONNECTION_STRING")
+)
+databaseSchema <- Sys.getenv("CDM_IRIS_OHDSI_SCHEMA")
 tables <- getTableNames(connection, databaseSchema)
 sql <- paste(sprintf("DROP TABLE %s.\"%s\" CASCADE;", databaseSchema, tables), collapse= "\n")
 executeSql(connection, sql)
