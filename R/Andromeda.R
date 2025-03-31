@@ -59,19 +59,17 @@
 #' andromeda$foo
 #' }
 #' @export
-querySqlToAndromeda <- function(connection,
-                                sql,
-                                andromeda,
-                                andromedaTableName,
-                                errorReportFile = file.path(getwd(), "errorReportSql.txt"),
-                                snakeCaseToCamelCase = FALSE,
-                                appendToTable = FALSE,
-                                integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                             default = TRUE
-                                ),
-                                integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                               default = TRUE
-                                )) {
+querySqlToAndromeda <- function(
+    connection,
+    sql,
+    andromeda,
+    andromedaTableName,
+    errorReportFile = file.path(getwd(), "errorReportSql.txt"),
+    snakeCaseToCamelCase = FALSE,
+    appendToTable = FALSE,
+    integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
+    integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE)
+) {
   if (!DBI::dbIsValid(connection)) {
     stop("Connection is closed")
   }
@@ -97,10 +95,10 @@ querySqlToAndromeda <- function(connection,
     startTime <- Sys.time()
     queryResult <- DBI::dbSendQuery(connection, sql)
     
-    on.exit(dbClearResult(queryResult))
+    on.exit(DBI::dbClearResult(queryResult))
     first <- TRUE
     while (!DBI::dbHasCompleted(queryResult)) {
-      batch <- dbFetch(queryResult, n = DBFETCH_BATCH_SIZE)
+      batch <- DBI::dbFetch(queryResult, n = DBFETCH_BATCH_SIZE)
       batch <- convertAllInteger64ToNumeric(batch, integerAsNumeric, integer64AsNumeric)
       batch <- convertFields(batch, dbms(connection))
       if (snakeCaseToCamelCase) {
@@ -108,12 +106,11 @@ querySqlToAndromeda <- function(connection,
       }
       if (first && !appendToTable) {
         andromeda[[andromedaTableName]] <- batch
+        first <- FALSE
       } else {
         Andromeda::appendToTable(andromeda[[andromedaTableName]], batch)
       }
-      first <- FALSE
     }
-    
     delta <- Sys.time() - startTime
     logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
     invisible(andromeda)
@@ -167,24 +164,22 @@ querySqlToAndromeda <- function(connection,
 #' andromeda$foo
 #' }
 #' @export
-renderTranslateQuerySqlToAndromeda <- function(connection,
-                                               sql,
-                                               andromeda,
-                                               andromedaTableName,
-                                               errorReportFile = file.path(
-                                                 getwd(),
-                                                 "errorReportSql.txt"
-                                               ),
-                                               snakeCaseToCamelCase = FALSE,
-                                               appendToTable = FALSE,
-                                               tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                                               integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                            default = TRUE
-                                               ),
-                                               integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                              default = TRUE
-                                               ),
-                                               ...) {
+renderTranslateQuerySqlToAndromeda <- function(
+    connection,
+    sql,
+    andromeda,
+    andromedaTableName,
+    errorReportFile = file.path(
+      getwd(),
+      "errorReportSql.txt"
+    ),
+    snakeCaseToCamelCase = FALSE,
+    appendToTable = FALSE,
+    tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+    integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
+    integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
+    ...
+) {
   if (is(connection, "Pool")) {
     connection <- pool::poolCheckout(connection)
     on.exit(pool::poolReturn(connection))

@@ -14,6 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Get available Java heap space
+#'
+#' @description
+#' For debugging purposes: get the available Java heap space.
+#'
+#' @return
+#' The Java heap space (in bytes).
+#'
+#' @export
+getAvailableJavaHeapSpace <- function() {
+  availableSpace <- rJava::J("org.ohdsi.databaseConnector.BatchedQuery")$getAvailableHeapSpace()
+  return(availableSpace)
+}
+
 validateInt64Query <- function() {
   # Validate that communication of 64-bit integers with Java is correct:
   array <- rJava::J("org.ohdsi.databaseConnector.BatchedQuery")$validateInteger64()
@@ -86,7 +100,6 @@ delayIfNecessaryForInsert <- function(sql) {
   regexForInsert <- "(^INSERT\\s+INTO)\\s+([a-zA-Z0-9_$#-]*\\.?\\s*(?:[a-zA-Z0-9_]+)*)"
   delayIfNecessary(sql, regexForInsert, insertExecutionTimes, 5)
 }
-
 
 lowLevelExecuteSql <- function(connection, sql) {
   statement <- rJava::.jcall(connection@jConnection, "Ljava/sql/Statement;", "createStatement")

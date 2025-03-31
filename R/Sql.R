@@ -14,20 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Get available Java heap space
-#'
-#' @description
-#' For debugging purposes: get the available Java heap space.
-#'
-#' @return
-#' The Java heap space (in bytes).
-#'
-#' @export
-getAvailableJavaHeapSpace <- function() {
-  availableSpace <- rJava::J("org.ohdsi.databaseConnector.BatchedQuery")$getAvailableHeapSpace()
-  return(availableSpace)
-}
-
 .systemInfo <- function() {
   si <- sessionInfo()
   lines <- c()
@@ -357,10 +343,10 @@ querySql <- function(connection,
   tryCatch({
     logTrace(paste("Querying SQL:", truncateSql(sqlStatements[1])))
     startTime <- Sys.time()
-    result <- dbGetQuery(connection, sqlStatements[1])
+    result <- DBI::dbGetQuery(connection, sqlStatements[1])
     delta <- Sys.time() - startTime
     logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-    results <- convertAllInteger64ToNumeric(result, integerAsNumeric, integer64AsNumeric)
+    result <- convertAllInteger64ToNumeric(result, integerAsNumeric, integer64AsNumeric)
     result <- convertFields(result, dbms(connection))
     if (snakeCaseToCamelCase) {
       colnames(result) <- SqlRender::snakeCaseToCamelCase(colnames(result))
@@ -635,12 +621,12 @@ renderTranslateQueryApplyBatched <- function(connection,
       .createErrorReport(dbms(connection), err$message, sql, errorReportFile)
     }
   )
-  on.exit(dbClearResult(queryResult))
+  on.exit(DBI::dbClearResult(queryResult))
   
   results <- list()
   position <- 1
   while (!DBI::dbHasCompleted(queryResult)) {
-    batch <- dbFetch(queryResult, n = DBFETCH_BATCH_SIZE)
+    batch <- DBI::dbFetch(queryResult, n = DBFETCH_BATCH_SIZE)
     batch <- convertAllInteger64ToNumeric(batch, integerAsNumeric, integer64AsNumeric)
     batch <- convertFields(batch, dbms(connection))
     if (snakeCaseToCamelCase) {

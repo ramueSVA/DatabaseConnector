@@ -1,5 +1,3 @@
-# @file Connect.R
-#
 # Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of DatabaseConnector
@@ -177,7 +175,6 @@ createConnectionDetails <- function(dbms,
   class(result) <- c("ConnectionDetails", "DefaultConnectionDetails")
   return(result)
 }
-
 
 #' Create DBI connection details
 #' 

@@ -39,7 +39,7 @@ addDbmsToLabel <- function(label, testServer) {
 # Create a list with testing server details ------------------------------
 testServers <- list()
 
-# Postgres
+# Postgres-----------------------------------------------------------------
 if (Sys.getenv("CDM5_POSTGRESQL_SERVER") != "") {
   parts <- unlist(strsplit(Sys.getenv("CDM5_POSTGRESQL_SERVER"), "/"))
   host <- parts[1]
@@ -64,7 +64,7 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") != "") {
   )
 }
 
-# SQL Server
+# SQL Server ------------------------------------------------------------
 if (Sys.getenv("CDM5_SQL_SERVER_SERVER") != "") {
   connectionString <- paste0("jdbc:sqlserver://", Sys.getenv("CDM5_SQL_SERVER_SERVER"))
   testServers[[length(testServers) + 1]] <- list(
@@ -85,7 +85,7 @@ if (Sys.getenv("CDM5_SQL_SERVER_SERVER") != "") {
   )
 }
 
-# Oracle
+# Oracle ----------------------------------------------------------------------
 if (Sys.getenv("CDM5_ORACLE_SERVER") != "") {
   port <- "1521"
   parts <- unlist(strsplit(Sys.getenv("CDM5_ORACLE_SERVER"), "/"))
@@ -110,7 +110,7 @@ if (Sys.getenv("CDM5_ORACLE_SERVER") != "") {
   )
 }
 
-# RedShift
+# RedShift ----------------------------------------------------------------------
 if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
   parts <- unlist(strsplit(Sys.getenv("CDM5_REDSHIFT_SERVER"), "/"))
   host <- parts[1]
@@ -135,7 +135,7 @@ if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
   )
 }
 
-# Snowflake
+# Snowflake --------------------------------------------------------------------
 if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
   testServers[[length(testServers) + 1]] <- list(
     connectionDetails = details <- createConnectionDetails(
@@ -150,7 +150,7 @@ if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
   )
 }
 
-# Databricks (Spark)
+# Databricks (Spark) --------------------------------------------------------------------------
 # Databricks is causing segfault errors on Linux. Temporary workaround is not to test on
 # Linux
 if (.Platform$OS.type == "windows") {
@@ -169,7 +169,7 @@ if (.Platform$OS.type == "windows") {
   }
 }
 
-# BigQuery
+# BigQuery ------------------------------------------------------------------
 if (Sys.getenv("CDM_BIG_QUERY_CONNECTION_STRING") != "") {
   # To avoid rate limit on BigQuery, only test on 1 OS:
   if (.Platform$OS.type == "windows") {
@@ -195,7 +195,8 @@ if (Sys.getenv("CDM_BIG_QUERY_CONNECTION_STRING") != "") {
   }
 }
 
-# InterSystems IRIS
+# InterSystems IRIS -----------------------------------------------------------------
+# InterSystems IRIS test server appears to be empty at the moment. Disabling tests until fixed
 
 # if (Sys.getenv("CDM_IRIS_CONNECTION_STRING") != "") {
 #   testServers[[length(testServers) + 1]] <- list(
@@ -211,7 +212,7 @@ if (Sys.getenv("CDM_BIG_QUERY_CONNECTION_STRING") != "") {
 #   )
 # }
 
-# SQLite
+# SQLite ----------------------------------------------------------------------------
 sqliteFile <- tempfile(fileext = ".sqlite")
 if (testthat::is_testing()) {
   withr::defer(unlink(sqliteFile, force = TRUE), testthat::teardown_env())
@@ -259,7 +260,7 @@ testServers[[length(testServers) + 1]] <- list(
   tempEmulationSchema = NULL
 )
 
-# DuckDB
+# DuckDB ---------------------------------------------------------------
 duckdbFile <- tempfile(fileext = ".duckdb")
 if (testthat::is_testing()) {
   withr::defer(unlink(duckdbFile, force = TRUE), testthat::teardown_env())
@@ -306,3 +307,4 @@ testServers[[length(testServers) + 1]] <- list(
   cdmDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = NULL
 )
+
