@@ -589,7 +589,10 @@ setMethod(
     if (!is.null(databaseSchema)) {
       name <- paste(databaseSchema, name, sep = ".")
     }
-    sql <- "TRUNCATE TABLE @table; DROP TABLE @table;"
+    sql <- "TRUNCATE TABLE @table;"
+    sql <- SqlRender::render(sql = sql, table = name)
+    DBI::dbExecute(conn, sql)
+    sql <- "DROP TABLE @table;"
     sql <- SqlRender::render(sql = sql, table = name)
     DBI::dbExecute(conn, sql)
     return(TRUE)
