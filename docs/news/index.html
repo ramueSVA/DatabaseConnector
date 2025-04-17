@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.1</span>
       </span>
     </div>
 
@@ -67,7 +67,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="6.4.0" id="databaseconnector-640">DatabaseConnector 6.4.0<a class="anchor" aria-label="anchor" href="#databaseconnector-640"></a></h2>
+<h2 class="page-header" data-toc-text="6.4.1" id="databaseconnector-641">DatabaseConnector 6.4.1<a class="anchor" aria-label="anchor" href="#databaseconnector-641"></a></h2>
+<p>Bugfixes:</p>
+<ul><li><p>Remove direct call to <code>bit64</code> S3 method to avoid issues in the future.</p></li>
+<li><p>Fixed error when calling <code><a href="../reference/getTableNames.html">getTableNames()</a></code> on a <code>DuckDB</code> connection.</p></li>
+<li><p>Fixed empty schema list in RStudio Connection pane for IRIS.</p></li>
+<li><p>Avoid startup warnings on CRAN’s Windows testing environments.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="6.4.0" id="databaseconnector-640">DatabaseConnector 6.4.0<small>2025-01-30</small><a class="anchor" aria-label="anchor" href="#databaseconnector-640"></a></h2>
 <p>Changes:</p>
 <ul><li>Adding support for InterSystems IRIS.</li>
 </ul></div>

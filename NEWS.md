@@ -7,6 +7,10 @@ Bugfixes:
 
 - Fixed error when calling `getTableNames()` on a `DuckDB` connection.
 
+- Fixed empty schema list in RStudio Connection pane for IRIS.
+
+- Avoid startup warnings on CRAN's Windows testing environments.
+
 
 DatabaseConnector 6.4.0
 =======================
