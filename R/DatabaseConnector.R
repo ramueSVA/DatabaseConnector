@@ -25,7 +25,11 @@
 NULL
 
 .onLoad <- function(libname, pkgname) {
-  params <- c(getOption("java.parameters"), "-XX:+UseAllWindowsProcessorGroups")
+  if (.Platform$OS.type == "windows") {
+    params <- c(getOption("java.parameters"), "-XX:+UseAllWindowsProcessorGroups")
+  } else {
+    params <- getOption("java.parameters")
+  }
   rJava::.jpackage(pkgname, jars = "DatabaseConnector.jar", lib.loc = libname, parameters = params)
   
   # Verify checksum of JAR:
