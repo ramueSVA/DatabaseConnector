@@ -133,18 +133,22 @@ if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
 }
 
 # Snowflake
-if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
-  testServers[[length(testServers) + 1]] <- list(
-    connectionDetails = details <- createConnectionDetails(
-      dbms = "snowflake",
-      user = Sys.getenv("CDM_SNOWFLAKE_USER"),
-      password = URLdecode(Sys.getenv("CDM_SNOWFLAKE_PASSWORD")),
-      connectionString = Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING")
-    ),
-    NULL,
-    cdmDatabaseSchema = Sys.getenv("CDM_SNOWFLAKE_CDM53_SCHEMA"),
-    tempEmulationSchema = Sys.getenv("CDM_SNOWFLAKE_OHDSI_SCHEMA")
-  )
+# Snowflake driver is incompatible with newer Linux version required by GitHub Actions, so disabling
+# on Linux for now. See https://community.snowflake.com/s/article/Getting-java-lang-NoClassDefFoundError-for-class-RootAllocator
+if (.Platform$OS.type == "windows") {
+  if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
+    testServers[[length(testServers) + 1]] <- list(
+      connectionDetails = details <- createConnectionDetails(
+        dbms = "snowflake",
+        user = Sys.getenv("CDM_SNOWFLAKE_USER"),
+        password = URLdecode(Sys.getenv("CDM_SNOWFLAKE_PASSWORD")),
+        connectionString = Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING")
+      ),
+      NULL,
+      cdmDatabaseSchema = Sys.getenv("CDM_SNOWFLAKE_CDM53_SCHEMA"),
+      tempEmulationSchema = Sys.getenv("CDM_SNOWFLAKE_OHDSI_SCHEMA")
+    )
+  }
 }
 
 # Databricks (Spark)
@@ -153,16 +157,16 @@ if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
 if (.Platform$OS.type == "windows") {
   if (Sys.getenv("CDM5_SPARK_CONNECTION_STRING") != "") {
     testServers[[length(testServers) + 1]] <- list(
-        connectionDetails = details <- createConnectionDetails(
-          dbms = "spark",
-          user = Sys.getenv("CDM5_SPARK_USER"),
-          password = URLdecode(Sys.getenv("CDM5_SPARK_PASSWORD")),
-          connectionString = Sys.getenv("CDM5_SPARK_CONNECTION_STRING")
-        ),
-        NULL,
-        cdmDatabaseSchema = Sys.getenv("CDM5_SPARK_CDM_SCHEMA"),
-        tempEmulationSchema = Sys.getenv("CDM5_SPARK_OHDSI_SCHEMA")
-      )
+      connectionDetails = details <- createConnectionDetails(
+        dbms = "spark",
+        user = Sys.getenv("CDM5_SPARK_USER"),
+        password = URLdecode(Sys.getenv("CDM5_SPARK_PASSWORD")),
+        connectionString = Sys.getenv("CDM5_SPARK_CONNECTION_STRING")
+      ),
+      NULL,
+      cdmDatabaseSchema = Sys.getenv("CDM5_SPARK_CDM_SCHEMA"),
+      tempEmulationSchema = Sys.getenv("CDM5_SPARK_OHDSI_SCHEMA")
+    )
   }
 }
 
