@@ -133,9 +133,9 @@ if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
 }
 
 # Snowflake
-# Snowflake driver is incompatible with newer Linux version required by GitHub Actions, so disabling
-# on Linux for now. See https://community.snowflake.com/s/article/Getting-java-lang-NoClassDefFoundError-for-class-RootAllocator
-if (.Platform$OS.type == "windows") {
+# # Snowflake driver is incompatible with newer Linux version required by GitHub Actions, so disabling
+# # on Linux for now. See https://community.snowflake.com/s/article/Getting-java-lang-NoClassDefFoundError-for-class-RootAllocator
+# if (.Platform$OS.type == "windows") {
   if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
     testServers[[length(testServers) + 1]] <- list(
       connectionDetails = details <- createConnectionDetails(
@@ -149,7 +149,7 @@ if (.Platform$OS.type == "windows") {
       tempEmulationSchema = Sys.getenv("CDM_SNOWFLAKE_OHDSI_SCHEMA")
     )
   }
-}
+# }
 
 # Databricks (Spark)
 # Databricks is causing segfault errors on Linux. Temporary workaround is not to test on
