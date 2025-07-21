@@ -22,8 +22,11 @@ dbplyr_edition.DatabaseConnectorConnection <- function(con) {
   2L
 }
 
-#' @export
 #' @importFrom dbplyr sql_query_select
+#' @export
+dbplyr::sql_query_select
+
+#' @export
 sql_query_select.DatabaseConnectorJdbcConnection <- function(con,
                                                              select,
                                                              from,
@@ -84,3 +87,18 @@ sql_translation.DatabaseConnectorJdbcConnection <- function(con) {
      "iris" = utils::getFromNamespace("sql_translation.PqConnection", "dbplyr")(con),
      rlang::abort("Sql dialect is not supported!")) 
 }
+
+
+#' @importFrom dbplyr sql_escape_logical
+#' @export
+dbplyr::sql_escape_logical
+
+#' @export
+sql_escape_logical.DatabaseConnectorJdbcConnection <- function(con, x) {
+  if (dbms(con) == "sql server") {
+    dplyr::if_else(x, "1", "0", missing = "NULL")
+  } else {
+    NextMethod()
+  }
+}
+

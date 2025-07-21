@@ -101,20 +101,24 @@ delayIfNecessaryForInsert <- function(sql) {
   delayIfNecessary(sql, regexForInsert, insertExecutionTimes, 5)
 }
 
+# This helper function helps rlang handle rJava errors thrown by DatabaseConnector
+# See https://github.com/tidyverse/dbplyr/issues/1186 and https://github.com/r-lib/rlang/issues/1619 for details
+sanitizeJavaErrorForRlang <- function(expr) { tryCatch(expr, error = function(cnd) stop(conditionMessage(cnd))) }
+
 lowLevelExecuteSql <- function(connection, sql) {
   statement <- rJava::.jcall(connection@jConnection, "Ljava/sql/Statement;", "createStatement")
-  on.exit(rJava::.jcall(statement, "V", "close"))
+  on.exit(sanitizeJavaErrorForRlang(rJava::.jcall(statement, "V", "close")))
   if ((dbms(connection) == "spark") || (dbms(connection) == "iris")) {
     # For some queries the DataBricks JDBC driver will throw an error saying no ROWCOUNT is returned
     # when using executeLargeUpdate, so using execute instead.
     # Also use this approach for IRIS JDBC driver, which does not support executeLargeUpdate() directly.
-    rJava::.jcall(statement, "Z", "execute", as.character(sql), check = FALSE)
+    sanitizeJavaErrorForRlang(rJava::.jcall(statement, "Z", "execute", as.character(sql), check = FALSE))
     rowsAffected <- rJava::.jcall(statement, "I", "getUpdateCount", check = FALSE)
     if (rowsAffected == -1) {
       rowsAffected <- 0
     }
   } else {
-    rowsAffected <- rJava::.jcall(statement, "J", "executeLargeUpdate", as.character(sql), check = FALSE)
+    rowsAffected <- sanitizeJavaErrorForRlang(rJava::.jcall(statement, "J", "executeLargeUpdate", as.character(sql), check = FALSE))
   }
   
   if (dbms(connection) == "bigquery") {

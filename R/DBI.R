@@ -310,6 +310,7 @@ setMethod("dbFetch", "DatabaseConnectorJdbcResult", function(res, n = -1, ...) {
       results <- parseJdbcColumnData(batchedQuery = res@content)
     }
     colnames(results) <- tolower(colnames(results))
+    results <- convertFields(results, res@dbms) # dbms specific conversions
     return(results)
   },
   error = function(error) {
