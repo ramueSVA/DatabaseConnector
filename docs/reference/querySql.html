@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.1</span>
       </span>
     </div>
 
@@ -120,7 +120,14 @@ Defaults to 'errorReportSql.txt' in the current working directory.</p></dd>
     </div>
     <div id="details">
     <h2>Details</h2>
-    <p>This function sends the SQL to the server and retrieves the results. If an error occurs during SQL
+    <p>Fields will be automatically converted for improved consistenty in these situations:</p><ul><li><p>SQLite: Fields with names ending in <code>_date</code> will be converted to DATE fields. Rationale: SQLite
+does not support DATE fields.</p></li>
+<li><p>SQLite: Fields with names ending in <code>_datetime</code> will be converted to POSIXct fields. Rationale:
+SQLite does not support DATETIME fields.</p></li>
+<li><p>BigQuery and Snowflake: Integer fields will be converted to Integer if it fits in an integer, or
+will remain Integer64 otherwise. Rationale: these platforms do not distinguish between INT and
+BIGINT.</p></li>
+</ul><p>This function sends the SQL to the server and retrieves the results. If an error occurs during SQL
 execution, this error is written to a file to facilitate debugging. Null values in the database are converted
 to NA values in R.</p>
     </div>
