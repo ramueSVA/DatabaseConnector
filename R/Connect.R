@@ -1,5 +1,3 @@
-# @file Connect.R
-#
 # Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of DatabaseConnector
@@ -177,7 +175,6 @@ createConnectionDetails <- function(dbms,
   class(result) <- c("ConnectionDetails", "DefaultConnectionDetails")
   return(result)
 }
-
 
 #' Create DBI connection details
 #' 
@@ -574,10 +571,10 @@ connectNetezza <- function(connectionDetails) {
     connection <- connectUsingJdbcDriver(driver, connectionString, dbms = connectionDetails$dbms)
   } else {
     connection <- connectUsingJdbcDriver(driver,
-      connectionString,
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      dbms = connectionDetails$dbms
+                                         connectionString,
+                                         user = connectionDetails$user(),
+                                         password = connectionDetails$password(),
+                                         dbms = connectionDetails$dbms
     )
   }
   return(connection)
@@ -604,10 +601,10 @@ connectImpala <- function(connectionDetails) {
     connection <- connectUsingJdbcDriver(driver, connectionString, dbms = connectionDetails$dbms)
   } else {
     connection <- connectUsingJdbcDriver(driver,
-      connectionString,
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      dbms = connectionDetails$dbms
+                                         connectionString,
+                                         user = connectionDetails$user(),
+                                         password = connectionDetails$password(),
+                                         dbms = connectionDetails$dbms
     )
   }
   return(connection)
@@ -617,7 +614,7 @@ connectHive <- function(connectionDetails) {
   inform("Connecting using Hive driver")
   jarPath <- findPathToJar("^hive-jdbc-([.0-9]+-)*standalone\\.jar$", connectionDetails$pathToDriver)
   driver <- getJbcDriverSingleton("org.apache.hive.jdbc.HiveDriver", jarPath)
-
+  
   if (is.null(connectionDetails$connectionString()) || connectionDetails$connectionString() == "") {
     connectionString <- paste0("jdbc:hive2://", connectionDetails$server(), ":", connectionDetails$port(), "/")
     if (!is.null(connectionDetails$extraSettings)) {
@@ -627,10 +624,10 @@ connectHive <- function(connectionDetails) {
     connectionString <- connectionDetails$connectionString()
   }
   connection <- connectUsingJdbcDriver(driver,
-    connectionString,
-    user = connectionDetails$user(),
-    password = connectionDetails$password(),
-    dbms = connectionDetails$dbms
+                                       connectionString,
+                                       user = connectionDetails$user(),
+                                       password = connectionDetails$password(),
+                                       dbms = connectionDetails$dbms
   )
   return(connection)
 }
@@ -811,14 +808,6 @@ connectUsingJdbcDriver <- function(jdbcDriver,
       abort(paste0("Unable to connect JDBC to ", url, " (", rJava::.jcall(x, "S", "getMessage"), ")"))
     }
   }
-  ensureDatabaseConnectorConnectionClassExists()
-  class <- getClassDef("DatabaseConnectorJdbcConnection", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("DatabaseConnectorJdbcConnection",
-             contains = "DatabaseConnectorConnection", 
-             slots = list(jConnection = "jobjRef"),
-             where = class_cache)
-  }
   connection <- new("DatabaseConnectorJdbcConnection",
     jConnection = jConnection,
     identifierQuote = "",
@@ -831,41 +820,12 @@ connectUsingJdbcDriver <- function(jdbcDriver,
   return(connection)
 }
 
-ensureDatabaseConnectorConnectionClassExists <- function() {
-  class <- getClassDef("Microsoft SQL Server", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("Microsoft SQL Server",
-             where = class_cache)
-  }
-  class <- getClassDef("DatabaseConnectorConnection", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("DatabaseConnectorConnection", 
-             contains = c("Microsoft SQL Server", "DBIConnection"),
-             slots = list(
-               identifierQuote = "character",
-               stringQuote = "character",
-               dbms = "character",
-               uuid = "character"
-             ),
-             where = class_cache)
-  }
-}
 
 connectUsingDbi <- function(dbiConnectionDetails) {
   dbms <- dbiConnectionDetails$dbms
   dbiConnectionDetails$dbms <- NULL
   dbiConnection <- do.call(DBI::dbConnect, dbiConnectionDetails)
-  ensureDatabaseConnectorConnectionClassExists()
-  class <- getClassDef("DatabaseConnectorDbiConnection", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("DatabaseConnectorDbiConnection",
-             contains = "DatabaseConnectorConnection", 
-             slots = list(
-               dbiConnection = "DBIConnection",
-               server = "character"
-             ),
-             where = class_cache)
-  }
+  
   connection <- new("DatabaseConnectorDbiConnection",
     server = dbms,
     dbiConnection = dbiConnection,

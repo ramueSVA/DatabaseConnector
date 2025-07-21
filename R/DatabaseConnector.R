@@ -1,5 +1,3 @@
-# @file DatabaseConnector.R
-#
 # Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of DatabaseConnector
@@ -84,3 +82,5 @@ NULL
 NULL
 
 globalVars <- new.env()
+
+DBFETCH_BATCH_SIZE <- 9999

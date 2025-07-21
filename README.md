@@ -22,9 +22,7 @@ Features
   - PostgresSql
   - Microsoft Parallel Data Warehouse (a.k.a. Analytics Platform System)
   - Amazon Redshift
-  - Apache Impala
   - Google BigQuery
-  - IBM Netezza
   - SQLite
   - Spark
   - InterSystems IRIS
@@ -33,8 +31,8 @@ Features
   - Progress reporting
   - Multiple statements per query
 - Support for fetching data to Andromeda objects
-- Insert data frame to a database table
-- Supports the `DBI` interface, with SQL statements automatically translated to the appropriate dialect.
+- Insert data frame to a database table, using bulk loading if appropriate environmental variables are set.
+- Supports the `DBI` interface.
 - Supports the `dbplyr` interface.
 - Integrates with RStudio's Connections tab
 
@@ -79,6 +77,7 @@ install.packages("DatabaseConnector")
 3. Download the database drivers as described [here](http://ohdsi.github.io/DatabaseConnector/articles/Connecting.html#obtaining-drivers).
 
 4. (Optionally) To use Windows Authentication for SQL Server, download the authentication DDL file as described  [here](http://ohdsi.github.io/DatabaseConnector/reference/connect.html#windows-authentication-for-sql-server-1).
+
 
 User Documentation
 ==================

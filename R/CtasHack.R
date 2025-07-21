@@ -1,5 +1,3 @@
-# @file CtasHack.R
-#
 # Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of DatabaseConnector
@@ -193,21 +191,24 @@ multiValuesInsert <- function(connection, sqlTableName, sqlFieldNames, sqlDataTy
   if (progressBar) {
     pb <- txtProgressBar(style = 3)
   }
-  for (start in seq(1, nrow(data), by = batchSize)) {
-    if (progressBar) {
-      setTxtProgressBar(pb, start / nrow(data))
+  
+  if (nrow(data) > 0) {
+    for (start in seq(1, nrow(data), by = batchSize)) {
+      if (progressBar) {
+        setTxtProgressBar(pb, start / nrow(data))
+      }
+      end <- min(start + batchSize - 1, nrow(data))
+      batch <- toStrings(data[start:end, , drop = FALSE], sqlDataTypes)
+      valuesString <- paste("(", paste(apply(batch, MARGIN = 1, FUN = paste, collapse = ","), collapse = "),("), ")")
+        
+      sql <- "INSERT INTO @table (@fields) VALUES @values;"
+      sql <- SqlRender::render(sql = sql,
+                               table = sqlTableName,
+                               fields = sqlFieldNames,
+                               values = valuesString)
+      sql <- SqlRender::translate(sql, targetDialect = dbms(connection), tempEmulationSchema = tempEmulationSchema)
+      executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
     }
-    end <- min(start + batchSize - 1, nrow(data))
-    batch <- toStrings(data[start:end, , drop = FALSE], sqlDataTypes)
-    valuesString <- paste("(", paste(apply(batch, MARGIN = 1, FUN = paste, collapse = ","), collapse = "),("), ")")
-      
-    sql <- "INSERT INTO @table (@fields) VALUES @values;"
-    sql <- SqlRender::render(sql = sql,
-                             table = sqlTableName,
-                             fields = sqlFieldNames,
-                             values = valuesString)
-    sql <- SqlRender::translate(sql, targetDialect = dbms(connection), tempEmulationSchema = tempEmulationSchema)
-    executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   }
   if (progressBar) {
     setTxtProgressBar(pb, 1)

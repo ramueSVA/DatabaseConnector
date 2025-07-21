@@ -12,7 +12,6 @@ renderTranslateQuerySqlToAndromeda(
   errorReportFile = file.path(getwd(), "errorReportSql.txt"),
   snakeCaseToCamelCase = FALSE,
   appendToTable = FALSE,
-  oracleTempSchema = NULL,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
   integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
@@ -40,8 +39,6 @@ Defaults to 'errorReportSql.txt' in the current working directory.}
 replaced with the new data. If TRUE, data will be appended to an existing
 table, assuming it has the exact same structure.}
 
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
-
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To
 emulate temp tables, provide a schema with write privileges where temp tables
 can be created.}
@@ -60,7 +57,7 @@ results.
 }
 \description{
 This function renders, and translates SQL, sends it to the server, and returns the results as an
-ffdf object
+\code{Andromeda} object
 }
 \details{
 This function calls the \code{render} and \code{translate} functions in the \code{SqlRender} package

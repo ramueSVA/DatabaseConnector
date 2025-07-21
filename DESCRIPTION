@@ -1,8 +1,8 @@
 Package: DatabaseConnector
 Type: Package
 Title: Connecting to Various Database Platforms
-Version: 6.4.1
-Date: 2025-04-17
+Version: 7.0.0
+Date: 2025-03-31
 Authors@R: c(
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut", "cre")),
     person("Marc", "Suchard", role = c("aut")),
@@ -48,11 +48,10 @@ Suggests:
     RPostgres,
     odbc,
     duckdb,
+    bigrquery,
     pool,
     ParallelLogger,
     AzureStor
-Remotes:
-  ohdsi/SqlRender@develop
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/DatabaseConnector/, https://github.com/OHDSI/DatabaseConnector
