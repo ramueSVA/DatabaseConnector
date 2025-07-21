@@ -1,5 +1,16 @@
-DatabaseConnector 6.4.1
+DatabaseConnector 7.0.0
 =======================
+
+Changes:
+
+- Changed `dplyr` back-end from using `SqlRender` to native back-ends.
+
+- Finally dropped `oracleTempEmulationSchema` argument everywhere, after having been deprecated for many years.
+
+- Fully supporting logical types.
+
+- All `DatabaseConnector` unique top-level functions (e.g. `querySql()` and `getTableNames()`) now work on all `DBI` connections, not just `DatabaseConnector` connections. This is for improved separation of code, and should make it easier to add and remove new database platforms in the future.
+
 
 Bugfixes:
 
