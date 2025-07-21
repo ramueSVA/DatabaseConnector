@@ -23,11 +23,11 @@ public class BatchedQuery {
 	public static double            MAX_BATCH_SIZE  = 1000000;
 	public static long              CHECK_MEM_ROWS  = 10000;
 	private static String           SPARK           = "spark";
-    public static double 			NA_DOUBLE 		= Double.longBitsToDouble(0x7ff00000000007a2L);
-    public static int 				NA_INTEGER   	= Integer.MIN_VALUE;
-    public static long 				NA_LONG   		= Long.MIN_VALUE;
-    public static final Boolean		NA_BOOLEAN      = null;
-	
+	public static double 			NA_DOUBLE 		= Double.longBitsToDouble(0x7ff00000000007a2L);
+	public static int 				NA_INTEGER   	= Integer.MIN_VALUE;
+	public static long 				NA_LONG   		= Long.MIN_VALUE;
+	public static final Boolean		NA_BOOLEAN      = null;
+
 	private Object[]				columns;
 	private int[]					columnTypes;
 	private String[]				columnNames;
@@ -36,12 +36,13 @@ public class BatchedQuery {
 	private int						totalRowCount;
 	private int						batchSize;
 	private ResultSet				resultSet;
+	private Statement 				statement;
 	private Connection				connection;
 	private boolean					done;
 	private ByteBuffer				byteBuffer;
 	private long                    remainingMemoryThreshold;
 	private String                  dbms;
-	
+
 	private static double[] convertToInteger64ForR(long[] value, ByteBuffer byteBuffer) {
 		double[] result = new double[value.length];
 		byteBuffer.clear();
@@ -52,22 +53,22 @@ public class BatchedQuery {
 			result[i] = byteBuffer.getDouble();
 		return result;
 	}
-	
+
 	public static double[] validateInteger64() {
 		long[] values = new long[] { 1, -1, (long) Math.pow(2, 33), (long) Math.pow(-2, 33) };
 		return convertToInteger64ForR(values, ByteBuffer.allocate(8 * values.length));
 	}
-	
+
 	public static double getAvailableHeapSpace() {
 		return(getAvailableHeapSpace(true));
 	}
-	
+
 	private static long getAvailableHeapSpace(boolean collectGarbage) {
 		if (collectGarbage)
 			System.gc();
 		return Runtime.getRuntime().maxMemory() - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 	}
-	
+
 	private void reserveMemory() {
 		long availableMemoryAtStart = getAvailableHeapSpace(true);
 		// Try to estimate bytes needed per row. Note that we could severely underestimate if data contains very large 
@@ -120,7 +121,7 @@ public class BatchedQuery {
 					column[i] = null;
 			}
 	}
-	
+
 	private void trySettingAutoCommit(boolean value) throws SQLException  {
 		if (dbms.equals(SPARK))
 			return;
@@ -130,12 +131,13 @@ public class BatchedQuery {
 			// Do nothing
 		}
 	}
-	
+
 	public BatchedQuery(Connection connection, String query, String dbms) throws SQLException {
 		this.connection = connection;
 		this.dbms = dbms;
 		trySettingAutoCommit(false);
-		Statement statement = null;
+		statement = null;
+		resultSet = null;
 		try {
 			statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 			statement.setFetchSize(FETCH_SIZE);
@@ -149,18 +151,7 @@ public class BatchedQuery {
 				columnSqlTypes[columnIndex] = metaData.getColumnTypeName(columnIndex + 1);
 				int type = metaData.getColumnType(columnIndex + 1);
 				String className = metaData.getColumnClassName(columnIndex + 1);
-			
-				/*
-				System.out.println("======================== debug ====================");
-				System.out.println("type= " + type);
-				System.out.println("className= " + className);
-				System.out.println("columnSqlTypes[columnIndex]= " + columnSqlTypes[columnIndex]);
-				System.out.println("Types.BOOLEAN=" + Types.BOOLEAN);
-				*/
-				
-				//Types.BOOLEAN is 16 but for a boolean datatype in the database type is -7. 
 				int precision = metaData.getPrecision(columnIndex + 1);
-				//System.out.println("precision=" + precision);
 				int scale = metaData.getScale(columnIndex + 1);
 				if (type == Types.BOOLEAN || className.equals("java.lang.Boolean") || columnSqlTypes[columnIndex] == "bool" 
 						|| (dbms.equals("oracle") && className.equals("java.math.BigDecimal") && precision == 1)) 
@@ -193,22 +184,19 @@ public class BatchedQuery {
 				} catch (SQLException rollbackEx) {
 					System.err.println("Error rolling back transaction: " + rollbackEx.getMessage());
 				}
-        	}
-        	throw e;
+			}
+			throw e;
 		} 
-		
-//		finally {
-//			if (statement != null) {
-//				try {
-//					statement.close();
-//				} catch (SQLException closeEx) {
-//					// Log close exception
-//					System.err.println("Error closing statement: " + closeEx.getMessage());
-//				}
-//			}
-//		}
 	}
 	
+	protected void finalize() {
+		try {
+			close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void fetchBatch() throws SQLException {
 		cleanUpStrings();
 		rowCount = 0;
@@ -229,7 +217,7 @@ public class BatchedQuery {
 							((int[]) columns[columnIndex])[rowCount] = NA_INTEGER;
 					} else if (columnTypes[columnIndex] == STRING) {
 						((String[]) columns[columnIndex])[rowCount] = resultSet.getString(columnIndex + 1);
-			        } else if (columnTypes[columnIndex] == DATE) {
+					} else if (columnTypes[columnIndex] == DATE) {
 						Date date = resultSet.getDate(columnIndex + 1);
 						if (date == null)
 							((int[]) columns[columnIndex])[rowCount] = NA_INTEGER;
@@ -256,22 +244,28 @@ public class BatchedQuery {
 			} else {
 				done = true;
 				trySettingAutoCommit(true);
+				close();
 				break;
 			}
 		}
 		totalRowCount += rowCount;
 	}
-	
-	public void clear() {
-		try {
-			resultSet.close();
-			columns = null;
-			byteBuffer = null;
-		} catch (SQLException e) {
-			e.printStackTrace();
+
+	private void close() throws SQLException {
+		if (statement != null) {
+			// Closing the statement closes the result set: 
+			// https://docs.oracle.com/javase/6/docs/api/java/sql/Statement.html#close()
+			statement.close();	
+			statement = null;
 		}
 	}
-	
+
+	public void clear() throws SQLException {
+		columns = null;
+		byteBuffer = null;
+		close();
+	}
+
 	public double[] getNumeric(int columnIndex) {
 		double[] column = ((double[]) columns[columnIndex - 1]);
 		if (column.length > rowCount) {
@@ -281,7 +275,7 @@ public class BatchedQuery {
 		} else
 			return column;
 	}
-	
+
 	public String[] getString(int columnIndex) {
 		String[] column = ((String[]) columns[columnIndex - 1]);
 		if (column.length > rowCount) {
@@ -291,7 +285,7 @@ public class BatchedQuery {
 		} else
 			return column;
 	}
- 
+
 	public int[] getInteger(int columnIndex) {
 		int[] column = ((int[]) columns[columnIndex - 1]);
 		if (column.length > rowCount) {
@@ -301,23 +295,23 @@ public class BatchedQuery {
 		} else
 			return column;
 	}
-	
+
 	private int[] mapBooleanToInt(Boolean[] booleanArray) {
 		int[] intArray = new int[booleanArray.length];
 
-        // Map Boolean values to int values
-        for (int i = 0; i < booleanArray.length; i++) {
-            if (booleanArray[i] == null) {
-                intArray[i] = -1;    // Map null to -1
-            } else if (booleanArray[i]) {
-                intArray[i] = 1;     // Map true to 1
-            } else {
-                intArray[i] = 0;     // Map false to 0
-            }
-        }
-        return intArray;
+		// Map Boolean values to int values
+		for (int i = 0; i < booleanArray.length; i++) {
+			if (booleanArray[i] == null) {
+				intArray[i] = -1;    // Map null to -1
+			} else if (booleanArray[i]) {
+				intArray[i] = 1;     // Map true to 1
+			} else {
+				intArray[i] = 0;     // Map false to 0
+			}
+		}
+		return intArray;
 	}
-    // Pass integer to R which is easier than boolean types
+	// Pass integer to R which is easier than boolean types
 	public int[] getBoolean(int columnIndex) {
 		Boolean[] column = ((Boolean[]) columns[columnIndex - 1]);
 
@@ -328,7 +322,7 @@ public class BatchedQuery {
 		} else
 			return mapBooleanToInt(column);
 	}
-	
+
 	public double[] getInteger64(int columnIndex) {
 		long[] column = ((long[]) columns[columnIndex - 1]);
 		if (column.length > rowCount) {
@@ -338,27 +332,27 @@ public class BatchedQuery {
 		} else
 			return convertToInteger64ForR(column, byteBuffer);
 	}
-	
+
 	public boolean isDone() {
 		return done;
 	}
-	
+
 	public boolean isEmpty() {
 		return (rowCount == 0);
 	}
-	
+
 	public int[] getColumnTypes() {
 		return columnTypes;
 	}
-	
+
 	public String[] getColumnSqlTypes() {
 		return columnSqlTypes;
 	}
-	
+
 	public String[] getColumnNames() {
 		return columnNames;
 	}
-	
+
 	public int getTotalRowCount() {
 		return totalRowCount;
 	}
