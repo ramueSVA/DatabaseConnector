@@ -2,7 +2,6 @@
 
 S3method(compileReconnectCode,DatabaseConnectorDbiConnection)
 S3method(compileReconnectCode,default)
-S3method(db_sql_render,DatabaseConnectorJdbcConnection)
 S3method(dbplyr_edition,DatabaseConnectorConnection)
 S3method(disconnect,DatabaseConnectorDbiConnection)
 S3method(disconnect,default)
