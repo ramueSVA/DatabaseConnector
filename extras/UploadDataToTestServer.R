@@ -54,13 +54,13 @@ fromConnection <- connect(
 )
 fromDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM54_SCHEMA")
 
-toConnection <- connect(
-  dbms = "postgresql",
-  user = Sys.getenv("CDM5_POSTGRESQL_USER"),
-  password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
-  server = Sys.getenv("CDM5_POSTGRESQL_SERVER")
-)
-toDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+# toConnection <- connect(
+#   dbms = "postgresql",
+#   user = Sys.getenv("CDM5_POSTGRESQL_USER"),
+#   password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
+#   server = Sys.getenv("CDM5_POSTGRESQL_SERVER")
+# )
+# toDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 
 # toConnection <- connect(
 #   dbms = "postgresql",
@@ -77,6 +77,9 @@ toConnection <- connect(
   connectionString = Sys.getenv("CDM_IRIS_CONNECTION_STRING")
 )
 toDatabaseSchema <- Sys.getenv("CDM_IRIS_CDM_SCHEMA")
+renderTranslateExecuteSql(toConnection, 
+                          sql = "CREATE SCHEMA IF NOT EXISTS @schema;",
+                          schema = toDatabaseSchema)
 
 
 tableNames <- getTableNames(fromConnection, fromDatabaseSchema)

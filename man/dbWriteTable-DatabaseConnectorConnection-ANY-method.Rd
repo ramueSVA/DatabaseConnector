@@ -16,7 +16,7 @@
 )
 }
 \arguments{
-\item{conn}{A \linkS4class{DBIConnection} object, as returned by
+\item{conn}{A \link[DBI:DBIConnection-class]{DBIConnection} object, as returned by
 \code{\link[DBI:dbConnect]{dbConnect()}}.}
 
 \item{name}{The table name, passed on to \code{\link[DBI:dbQuoteIdentifier]{dbQuoteIdentifier()}}. Options are:
@@ -48,7 +48,6 @@ given verbatim, e.g. \code{SQL('"my_schema"."table_name"')}
 Writes, overwrites or appends a data frame to a database table, optionally
 converting row names to a column and specifying SQL data types for fields.
 
-\Sexpr[results=rd,stage=render]{DBI:::methods_as_rd("dbWriteTable")}
 }
 \details{
 The \code{databaseSchema} argument is interpreted differently according to the different platforms:
