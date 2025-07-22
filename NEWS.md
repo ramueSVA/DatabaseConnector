@@ -3,26 +3,28 @@ DatabaseConnector 7.0.0
 
 Changes:
 
-- Changed `dplyr` back-end from using `SqlRender` to native back-ends.
+1. Changed `dplyr` back-end from using `SqlRender` to native back-ends.
 
-- Finally dropped `oracleTempEmulationSchema` argument everywhere, after having been deprecated for many years.
+2. Finally dropped `oracleTempEmulationSchema` argument everywhere, after having been deprecated for many years.
 
-- Fully supporting logical types.
+3. Fully supporting logical types.
 
-- All `DatabaseConnector` unique top-level functions (e.g. `querySql()` and `getTableNames()`) now work on all `DBI` connections, not just `DatabaseConnector` connections. This is for improved separation of code, and should make it easier to add and remove new database platforms in the future.
+4. When not using `snakeCaseToCamelCase = TRUE`, column names are now returned in lower case to conform with DBI.
+
+5. All `DatabaseConnector` unique top-level functions (e.g. `querySql()` and `getTableNames()`) now work on all `DBI` connections, not just `DatabaseConnector` connections. This is for improved separation of code, and should make it easier to add and remove new database platforms in the future.
 
 
 Bugfixes:
 
-- Remove direct call to `bit64` S3 method to avoid issues in the future.
+1. Remove direct call to `bit64` S3 method to avoid issues in the future.
 
-- Fixed error when calling `getTableNames()` on a `DuckDB` connection.
+2. Fixed error when calling `getTableNames()` on a `DuckDB` connection.
 
-- Fixed empty schema list in RStudio Connection pane for IRIS.
+3. Fixed empty schema list in RStudio Connection pane for IRIS.
 
-- Avoid startup warnings on CRAN's Windows testing environments.
+4. Avoid startup warnings on CRAN's Windows testing environments.
 
-- Updated Snowflake driver to 3.24.0.
+5. Updated Snowflake driver to 3.24.0.
 
 
 DatabaseConnector 6.4.0
