@@ -147,19 +147,31 @@ setMethod("dbGetInfo", "DatabaseConnectorConnection", function(dbObj, ...) {
 setMethod("dbQuoteIdentifier", 
           signature("DatabaseConnectorConnection", "character"), 
           function(conn, x, ...) {
+            
+            if (dbms(con) == "spark") {
+              identifierQuote <- '`'
+            } else {
+              # all other supported dbms use "
+              identifierQuote <- '"'
+            }
+            
             if (length(x) == 0L) {
               return(DBI::SQL(character()))
             }
             if (any(is.na(x))) {
               abort("Cannot pass NA to dbQuoteIdentifier()")
             }
-            if (nzchar(conn@identifierQuote)) {
-              x <- gsub(conn@identifierQuote, paste0(
-                conn@identifierQuote,
-                conn@identifierQuote
+            if (nzchar(identifierQuote)) {
+              x <- gsub(identifierQuote, paste0(
+                identifierQuote,
+                identifierQuote
               ), x, fixed = TRUE)
             }
-            return(DBI::SQL(paste0(conn@identifierQuote, encodeString(x), conn@identifierQuote)))
+            
+            nms <- names(x)
+            res <- DBI::SQL(paste0(identifierQuote, encodeString(x), identifierQuote))
+            names(res) <- nms
+            return(res)
           })
 
 setMethod("dbQuoteString", 
