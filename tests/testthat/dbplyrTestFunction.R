@@ -16,12 +16,15 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   } else {
     stop("person table not found in cdm schema!")
   }
-  person <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, personTableName))
-  observationPeriod <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, observationPeriodTableName))
+  
+  person <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, personTableName)) %>% 
+    rename_all(tolower)
+  observationPeriod <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, observationPeriodTableName)) %>%
+    rename_all(tolower)
   
   # Test filter, arrange, relocate, distinct -----------------------------------
   nMales <- person %>%
-    filter(gender_concept_id == 8507) %>%
+    filter(.data$gender_concept_id == 8507) %>%
     count() %>%
     pull()
   expect_gt(nMales, 1)

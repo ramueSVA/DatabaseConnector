@@ -47,7 +47,7 @@ setMethod(
       } else {
         tables <- DBI::dbListTables(conn@dbiConnection, schema = databaseSchema)
       }
-      return(tolower(tables))
+      return(tables)
     }
     
     if (is.null(databaseSchema)) {
