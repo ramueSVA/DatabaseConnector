@@ -148,7 +148,7 @@ setMethod("dbQuoteIdentifier",
           signature("DatabaseConnectorConnection", "character"), 
           function(conn, x, ...) {
             
-            if (dbms(con) == "spark") {
+            if (dbms(conn) == "spark") {
               identifierQuote <- '`'
             } else {
               # all other supported dbms use "
