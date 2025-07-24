@@ -89,7 +89,7 @@ setMethod(
     while (rJava::.jcall(resultSet, "Z", "next")) {
       tables <- c(tables, rJava::.jcall(resultSet, "S", "getString", "TABLE_NAME"))
     }
-    return(tolower(tables))
+    return(tables)
   })
 
 #' List all tables in a database schema.
