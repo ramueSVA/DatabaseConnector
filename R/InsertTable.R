@@ -240,7 +240,13 @@ insertTable.DatabaseConnectorJdbcConnection <- function(connection,
     createTable <- TRUE
   }
   if (tempTable & substr(tableName, 1, 1) != "#" & dbms != "redshift") {
-    tableName <- paste("#", tableName, sep = "")
+    if (startsWith(tableName, "\"")) {
+      tableName <- paste0("\"#", substr(tableName, 2, nchar(tableName)))
+    } else if (startsWith(tableName, "`")) {
+      tableName <- paste0("`#", substr(tableName, 2, nchar(tableName)))
+    } else {
+      tableName <- paste0("#", tableName)
+    }
   }
   if (!is.null(databaseSchema)) {
     tableName <- paste(databaseSchema, tableName, sep = ".")
