@@ -148,7 +148,7 @@ setMethod("dbQuoteIdentifier",
           signature("DatabaseConnectorConnection", "character"), 
           function(conn, x, ...) {
             
-            if (dbms(conn) == "spark") {
+            if (dbms(conn) %in% c("spark", "bigquery")) {
               identifierQuote <- '`'
             } else {
               # all other supported dbms use "
@@ -183,10 +183,12 @@ setMethod("dbQuoteString",
             if (any(is.na(x))) {
               abort("Cannot pass NA to dbQuoteString()")
             }
-            if (nzchar(conn@stringQuote)) {
-              x <- gsub(conn@stringQuote, paste0(conn@stringQuote, conn@stringQuote), x, fixed = TRUE)
+            
+            stringQuote <- "'" # all supported dbms use ' to quote strings
+            if (nzchar(stringQuote)) {
+              x <- gsub(stringQuote, paste0(stringQuote, stringQuote), x, fixed = TRUE)
             }
-            return(DBI::SQL(paste0(conn@stringQuote, encodeString(x), conn@stringQuote)))
+            return(DBI::SQL(paste0(stringQuote, encodeString(x), stringQuote)))
           }
 )
 
