@@ -949,7 +949,9 @@ dbms <- function(connection) {
     "RedshiftConnection" = "redshift",
     "BigQueryConnection" = "bigquery",
     "SQLiteConnection" = "sqlite",
-    "duckdb_connection" = "duckdb"
+    "duckdb_connection" = "duckdb",
+    "Snowflake" = "snowflake",
+    "Spark SQL" = "spark"
     # add mappings from various DBI connection classes to SqlRender dbms here
   )
 }
