@@ -91,7 +91,7 @@ getTableString <- function(tableName, connection, databaseSchema) {
     sql = "SELECT COUNT(*) FROM @database_schema.@table_name;",
     database_schema = databaseSchema,
     table_name = tableName
-  )[, 1]
+  )[[1]]
   return(paste(tableName, paste(paste(fieldNames, fieldClasses, sep = "="), collapse = ", "), sprintf("nrow=%d", count)))
 }
 
