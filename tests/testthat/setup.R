@@ -105,8 +105,7 @@ if (Sys.getenv("CDM5_ORACLE_SERVER") != "") {
       user = Sys.getenv("CDM5_ORACLE_USER"),
       password = URLdecode(Sys.getenv("CDM5_ORACLE_PASSWORD"))
     ),
-    # cdmDatabaseSchema = Sys.getenv("CDM5_ORACLE_CDM54_SCHEMA"),
-    cdmDatabaseSchema = "CDMV54",
+    cdmDatabaseSchema = Sys.getenv("CDM5_ORACLE_CDM54_SCHEMA"),
     tempEmulationSchema = Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
   )
 }
