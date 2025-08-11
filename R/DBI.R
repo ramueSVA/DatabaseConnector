@@ -147,19 +147,31 @@ setMethod("dbGetInfo", "DatabaseConnectorConnection", function(dbObj, ...) {
 setMethod("dbQuoteIdentifier", 
           signature("DatabaseConnectorConnection", "character"), 
           function(conn, x, ...) {
+            
+            if (dbms(conn) %in% c("spark", "bigquery")) {
+              identifierQuote <- '`'
+            } else {
+              # all other supported dbms use "
+              identifierQuote <- '"'
+            }
+            
             if (length(x) == 0L) {
               return(DBI::SQL(character()))
             }
             if (any(is.na(x))) {
               abort("Cannot pass NA to dbQuoteIdentifier()")
             }
-            if (nzchar(conn@identifierQuote)) {
-              x <- gsub(conn@identifierQuote, paste0(
-                conn@identifierQuote,
-                conn@identifierQuote
+            if (nzchar(identifierQuote)) {
+              x <- gsub(identifierQuote, paste0(
+                identifierQuote,
+                identifierQuote
               ), x, fixed = TRUE)
             }
-            return(DBI::SQL(paste0(conn@identifierQuote, encodeString(x), conn@identifierQuote)))
+            
+            nms <- names(x)
+            res <- DBI::SQL(paste0(identifierQuote, encodeString(x), identifierQuote))
+            names(res) <- nms
+            return(res)
           })
 
 setMethod("dbQuoteString", 
@@ -171,10 +183,12 @@ setMethod("dbQuoteString",
             if (any(is.na(x))) {
               abort("Cannot pass NA to dbQuoteString()")
             }
-            if (nzchar(conn@stringQuote)) {
-              x <- gsub(conn@stringQuote, paste0(conn@stringQuote, conn@stringQuote), x, fixed = TRUE)
+            
+            stringQuote <- "'" # all supported dbms use ' to quote strings
+            if (nzchar(stringQuote)) {
+              x <- gsub(stringQuote, paste0(stringQuote, stringQuote), x, fixed = TRUE)
             }
-            return(DBI::SQL(paste0(conn@stringQuote, encodeString(x), conn@stringQuote)))
+            return(DBI::SQL(paste0(stringQuote, encodeString(x), stringQuote)))
           }
 )
 
@@ -309,7 +323,6 @@ setMethod("dbFetch", "DatabaseConnectorJdbcResult", function(res, n = -1, ...) {
       rJava::.jcall(res@content, "V", "fetchBatch")
       results <- parseJdbcColumnData(batchedQuery = res@content)
     }
-    colnames(results) <- tolower(colnames(results))
     results <- convertFields(results, res@dbms) # dbms specific conversions
     return(results)
   },
@@ -453,7 +466,7 @@ setMethod(
       schema = databaseSchemaSplit[[2]],
       table = name
     )
-    return(tolower(columns$name))
+    return(columns$name)
   }
 )
 

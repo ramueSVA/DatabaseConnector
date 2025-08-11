@@ -727,7 +727,7 @@ connectSnowflake <- function(connectionDetails) {
       password = connectionDetails$password(),
       dbms = connectionDetails$dbms,
       "CLIENT_TIMESTAMP_TYPE_MAPPING"="TIMESTAMP_NTZ",
-      "QUOTED_IDENTIFIERS_IGNORE_CASE"="TRUE"
+      "QUOTED_IDENTIFIERS_IGNORE_CASE"="FALSE"
     )
   }
   return(connection)
@@ -949,7 +949,9 @@ dbms <- function(connection) {
     "RedshiftConnection" = "redshift",
     "BigQueryConnection" = "bigquery",
     "SQLiteConnection" = "sqlite",
-    "duckdb_connection" = "duckdb"
+    "duckdb_connection" = "duckdb",
+    "Snowflake" = "snowflake",
+    "Spark SQL" = "spark"
     # add mappings from various DBI connection classes to SqlRender dbms here
   )
 }

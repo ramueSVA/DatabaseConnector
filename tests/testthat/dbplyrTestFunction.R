@@ -7,13 +7,24 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   connection <- connect(connectionDetails)
   on.exit(dropEmulatedTempTables(connection))
   on.exit(disconnect(connection), add = TRUE)
+  if ("person" %in% getTableNames(connection, cdmDatabaseSchema, cast = "none")) {
+    personTableName <- "person"
+    observationPeriodTableName <- "observation_period"
+  } else if ("PERSON" %in% getTableNames(connection, cdmDatabaseSchema, cast = "none")) {
+    personTableName <- "PERSON"
+    observationPeriodTableName <- "OBSERVATION_PERIOD"
+  } else {
+    stop("person table not found in cdm schema!")
+  }
   
-  person <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, "person"))
-  observationPeriod <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, "observation_period"))
+  person <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, personTableName)) %>% 
+    rename_all(tolower)
+  observationPeriod <- tbl(connection, inDatabaseSchema(cdmDatabaseSchema, observationPeriodTableName)) %>%
+    rename_all(tolower)
   
   # Test filter, arrange, relocate, distinct -----------------------------------
   nMales <- person %>%
-    filter(gender_concept_id == 8507) %>%
+    filter(.data$gender_concept_id == 8507) %>%
     count() %>%
     pull()
   expect_gt(nMales, 1)
@@ -81,7 +92,7 @@ testDbplyrFunctions <- function(connectionDetails, cdmDatabaseSchema) {
   
   # Test creation of temp tables -----------------------------------------------
   # issues with temp emulation with oracle and sql server when Analyze happens as part of copy_to
-  if (!(dbms(connection) %in% c("oracle", "sql server", "snowflake", "spark", "bigquery"))) {
+  if (!(dbms(connection) %in% c("oracle", "sql server", "snowflake", "spark", "bigquery", "postgresql"))) {
     cars2 <- copy_to(connection, cars, overwrite = TRUE)
     cars2 <- cars2 %>% collect()
     expect_equivalent(arrange(cars, speed, dist), arrange(cars2, speed, dist))
