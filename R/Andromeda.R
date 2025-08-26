@@ -97,7 +97,9 @@ querySqlToAndromeda <- function(
     
     on.exit(DBI::dbClearResult(queryResult))
     first <- TRUE
-    while (!DBI::dbHasCompleted(queryResult)) {
+    # Even if there are no rows, we want to get an empty table with the right fields, hence check
+    # for `first`:
+    while (!DBI::dbHasCompleted(queryResult) || first) {
       batch <- DBI::dbFetch(queryResult, n = DBFETCH_BATCH_SIZE)
       batch <- convertAllInteger64ToNumeric(batch, integerAsNumeric, integer64AsNumeric)
       batch <- convertFields(batch, dbms(connection))

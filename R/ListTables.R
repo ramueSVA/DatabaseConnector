@@ -142,22 +142,22 @@ getTableNames <- function(connection, databaseSchema = NULL, cast = "lower") {
     } else {
       rlang::abort("databaseSchema can contain at most one dot (.)")
     }
-    tableNames <- DBI::dbGetQuery(con, sql)[[1]]
+    tableNames <- DBI::dbGetQuery(connection, sql)[[1]]
   } else if (is(connection, "Spark SQL")) {
     # spark odbc connection
     sql <- paste("SHOW TABLES", if (!is.null(databaseSchema)) paste("IN", databaseSchema))
-    tableNames <- DBI::dbGetQuery(con, sql)
+    tableNames <- DBI::dbGetQuery(connection, sql)
     tableNames <- tableNames[tableNames$isTemporary == FALSE, "tableName"]
   } else if (is(connection, "BigQueryConnection")) {
     # bigrquery connection
     databaseSchemaSplit <- strsplit(databaseSchema, "\\.")[[1]]
     if (length(databaseSchemaSplit) == 1) {
-      tableNames <- DBI::dbGetQuery(con,
+      tableNames <- DBI::dbGetQuery(connection,
          paste0("SELECT table_name ",
                 "FROM ", databaseSchemaSplit, ".INFORMATION_SCHEMA.TABLES ",
                 "WHERE table_schema = '", databaseSchemaSplit, "'"))[[1]]
     } else if (length(databaseSchemaSplit) == 2) {
-      tableNames <- DBI::dbGetQuery(con,
+      tableNames <- DBI::dbGetQuery(connection,
         paste0("SELECT table_name ",
                "FROM ", databaseSchemaSplit[[1]], ".", databaseSchemaSplit[[2]], ".INFORMATION_SCHEMA.TABLES ",
                "WHERE table_schema = '", databaseSchemaSplit[[2]], "'"))[[1]]

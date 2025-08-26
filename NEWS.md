@@ -9,7 +9,7 @@ Changes:
 
 3. Fully supporting logical types.
 
-4. When not using `snakeCaseToCamelCase = TRUE`, column names are now returned in lower case to conform with DBI.
+4. When not using `snakeCaseToCamelCase = TRUE`, column names are now returned in the original case to conform with DBI.
 
 5. All `DatabaseConnector` unique top-level functions (e.g. `querySql()` and `getTableNames()`) now work on all `DBI` connections, not just `DatabaseConnector` connections. This is for improved separation of code, and should make it easier to add and remove new database platforms in the future.
 
@@ -35,7 +35,6 @@ DatabaseConnector 6.4.0
 Changes:
 
 - Adding support for InterSystems IRIS.
-
 
 
 DatabaseConnector 6.3.3
