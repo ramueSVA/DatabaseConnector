@@ -26,7 +26,7 @@ getSqlDataTypes <- function(column) {
   } else if (bit64::is.integer64(column)) {
     return("BIGINT")
   } else if (is.numeric(column)) {
-    return("FLOAT")
+    return("DOUBLE")
   } else {
     if (is.factor(column)) {
       maxLength <-
@@ -269,6 +269,7 @@ insertTable.default <- function(connection,
   useBulkLoad <- (bulkLoad && dbms %in% c("hive", "redshift") && createTable) ||
     (bulkLoad && dbms %in% c("pdw", "postgresql") && !tempTable)
   useCtasHack <- dbms %in% c("pdw", "redshift", "bigquery", "hive") && createTable && nrow(data) > 0 && !useBulkLoad
+  useSingleInsert <- dbms %in% c("dremio") && nrow(data) > 0 && !useBulkLoad
   if (dbms == "bigquery" && useCtasHack && is.null(tempEmulationSchema)) {
     abort("tempEmulationSchema is required to use insertTable with bigquery when inserting into a new table")
   }
@@ -321,6 +322,8 @@ insertTable.default <- function(connection,
   } else if (useCtasHack) {
     # Inserting using CTAS hack ----------------------------------------------------------------
     ctasHack(connection, sqlTableName, tempTable, sqlFieldNames, sqlDataTypes, data, progressBar, tempEmulationSchema)
+  } else if(useSingleInsert) {
+    singleInsert(connection, sqlTableName, tempTable, sqlFieldNames, sqlDataTypes, data, progressBar, tempEmulationSchema)
   } else if (dbms == "spark") {
     multiValuesInsert(connection, sqlTableName, sqlFieldNames, sqlDataTypes, data, progressBar, tempEmulationSchema)
   } else {

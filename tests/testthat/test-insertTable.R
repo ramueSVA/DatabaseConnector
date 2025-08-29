@@ -92,6 +92,8 @@ for (testServer in testServers) {
       expect_equal(as.character(columnInfo$type), c("Date", "POSIXct", "integer", "numeric", "character", "numeric"))
     } else if (dbms == "snowflake") {
       expect_equal(as.character(columnInfo$field.type), c("DATE", "TIMESTAMPNTZ", "NUMBER", "DOUBLE", "VARCHAR", "NUMBER"))
+    } else if (dbms == "dremio") {
+      expect_equal(as.character(columnInfo$field.type), c("DATE", "TIMESTAMP", "DECIMAL", "DOUBLE", "VARCHAR", "BIGINT", "BOOLEAN"))
     } else if (dbms == "spark") {
       expect_equal(as.character(columnInfo$field.type), c("DATE", "TIMESTAMP", "INT", "FLOAT", "STRING", "BIGINT"))
     } else if (dbms == "bigquery") {

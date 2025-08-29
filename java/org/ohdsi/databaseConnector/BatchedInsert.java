@@ -21,6 +21,7 @@ public class BatchedInsert {
 	public static int		BIGINT						= 5;
 	private static String   SPARK                       = "spark";
 	private static String   SNOWFLAKE                   = "snowflake";
+  private static String   DREMIO                      = "dremio";
 	private static String   BIGQUERY                    = "bigquery";
 	
 	public static final int	BIG_DATA_BATCH_INSERT_LIMIT	= 1000;
@@ -45,7 +46,7 @@ public class BatchedInsert {
 	}
 	
 	private void trySettingAutoCommit(boolean value) throws SQLException  {
-		if (dbms.equals(SPARK))
+		if (dbms.equals(SPARK) || dbms.equals(DREMIO)
 			return;
 		try {
 			connection.setAutoCommit(value);
@@ -122,9 +123,10 @@ public class BatchedInsert {
 
 	public boolean executeBatch() throws SQLException, ParseException {
 		if (dbms.equals(BIGQUERY))
-	      return executeBigQueryBatch();	
-	
-		checkColumns();
+	      return executeBigQueryBatch();
+    if (dbms.equals(DREMIO))
+      return executeDremioBatch();
+    checkColumns();
 		try {
 			trySettingAutoCommit(false);
 			PreparedStatement statement = connection.prepareStatement(sql);
@@ -147,7 +149,7 @@ public class BatchedInsert {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Not all drivers support batch operations, for example GoogleBigQueryJDBC42.jar. In order to save data most efficiently, we implement saving through an
 	 * insert with multiple values.
@@ -188,8 +190,44 @@ public class BatchedInsert {
 		}
 		return true;
 	}
-	
-	private static long[] convertFromInteger64ToLong(double[] value) {
+
+  private boolean executeDremioBatch() throws SQLException, ParseException {
+    checkColumns();
+    try {
+      // Dremio does not support transactions
+
+      int offset = 0;
+      while (offset < rowCount) {
+        int size = Math.min(rowCount - offset, BIG_DATA_BATCH_INSERT_LIMIT);
+        // Build SQL with multiple VALUES (?, ?, ...)
+        String params = String.join(",", Collections.nCopies(columnCount, "?"));
+        String sqlWithValues = sql + "," + String.join(",", Collections.nCopies(size - 1, String.format("(%s)", params)));
+        PreparedStatement statement = connection.prepareStatement(sqlWithValues);
+
+        for (int i = 0; i < size; i++) {
+          for (int j = 0; j < columnCount; j++) {
+            int statementIndex = columnCount * i + j + 1;
+            int rowIndex = offset + i;
+            setValue(statement, statementIndex, rowIndex, j);
+          }
+        }
+
+        statement.executeUpdate();
+        statement.close();
+        connection.clearWarnings();
+
+        offset += BIG_DATA_BATCH_INSERT_LIMIT;
+      }
+    } finally {
+      for (int i = 0; i < columnCount; i++) {
+        columns[i] = null;
+      }
+      rowCount = 0;
+    }
+    return true;
+  }
+
+  private static long[] convertFromInteger64ToLong(double[] value) {
 		long[] result = new long[value.length];
 		ByteBuffer byteBuffer = ByteBuffer.allocate(8 * value.length);
 		for (int i = 0; i < value.length; i++)
