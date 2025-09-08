@@ -1,4 +1,4 @@
-This update includes 1 change. (see NEWS.md).
+This is a major release, with 6 changes and 5 fixes (see NEWS.md).
 
 ---
 

@@ -20,7 +20,7 @@ The batch sizes are determined by the java virtual machine and will depend on th
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">7.0.0</span>
       </span>
     </div>
 
@@ -85,7 +85,6 @@ that won't fit in to memory.</p>
 <span>  args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  errorReportFile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"errorReportSql.txt"</span><span class="op">)</span>,</span>
 <span>  snakeCaseToCamelCase <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  oracleTempSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,</span>
 <span>  integerAsNumeric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"databaseConnectorIntegerAsNumeric"</span>, default <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  integer64AsNumeric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"databaseConnectorInteger64AsNumeric"</span>, default <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
@@ -121,10 +120,6 @@ Defaults to 'errorReportSql.txt' in the current working directory.</p></dd>
 
 <dt id="arg-snakecasetocamelcase">snakeCaseToCamelCase<a class="anchor" aria-label="anchor" href="#arg-snakecasetocamelcase"></a></dt>
 <dd><p>If true, field names are assumed to use snake_case, and are converted to camelCase.</p></dd>
-
-
-<dt id="arg-oracletempschema">oracleTempSchema<a class="anchor" aria-label="anchor" href="#arg-oracletempschema"></a></dt>
-<dd><p>DEPRECATED: use <code>tempEmulationSchema</code> instead.</p></dd>
 
 
 <dt id="arg-tempemulationschema">tempEmulationSchema<a class="anchor" aria-label="anchor" href="#arg-tempemulationschema"></a></dt>
@@ -221,11 +216,11 @@ calling <code><a href="querySql.html">querySql()</a></code>.</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Martijn Schuemie, Marc Suchard.</p>
+  <p></p><p>Developed by Martijn Schuemie, Marc Suchard, Adam Black.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer></div>

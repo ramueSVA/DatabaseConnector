@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">7.0.0</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@ dbplyr</h1>
                         <h4 data-toc-skip class="author">Martijn J.
 Schuemie</h4>
             
-            <h4 data-toc-skip class="date">2025-04-17</h4>
+            <h4 data-toc-skip class="date">2025-09-08</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/DatabaseConnector/blob/HEAD/vignettes/DbiAndDbplyr.Rmd" class="external-link"><code>vignettes/DbiAndDbplyr.Rmd</code></a></small>
       <div class="hidden name"><code>DbiAndDbplyr.Rmd</code></div>
@@ -185,16 +185,16 @@ SqlRender:</p>
 <h3 id="date-functions">Date functions<a class="anchor" aria-label="anchor" href="#date-functions"></a>
 </h3>
 <p>The <code>dbplyr</code> package does not support date functions, but
-<code>DatabaseConnector</code> provides the <code><a href="../reference/dateDiff.html">dateDiff()</a></code>,
-<code><a href="../reference/dateAdd.html">dateAdd()</a></code>, <code><a href="../reference/eoMonth.html">eoMonth()</a></code>,
-<code><a href="../reference/dateFromParts.html">dateFromParts()</a></code>, <code><a href="../reference/year.html">year()</a></code>, <code><a href="../reference/month.html">month()</a></code>,
-and <code><a href="../reference/day.html">day()</a></code> functions that will correctly translate to
+<code>DatabaseConnector</code> provides the <code>dateDiff()</code>,
+<code>dateAdd()</code>, <code>eoMonth()</code>,
+<code>dateFromParts()</code>, <code>year()</code>, <code>month()</code>,
+and <code>day()</code> functions that will correctly translate to
 various data platforms:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">observationPeriod</span> <span class="op">&lt;-</span> <span class="fu">tbl</span><span class="op">(</span><span class="va">connection</span>, <span class="fu"><a href="../reference/inDatabaseSchema.html">inDatabaseSchema</a></span><span class="op">(</span><span class="st">"cdmv5"</span>, <span class="st">"observation_period"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">observationPeriod</span> <span class="op">%&gt;%</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="../reference/dateDiff.html">dateDiff</a></span><span class="op">(</span><span class="st">"day"</span>, <span class="va">observation_period_start_date</span>, <span class="va">observation_period_end_date</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">365</span></span>
+<span>    <span class="fu">dateDiff</span><span class="op">(</span><span class="st">"day"</span>, <span class="va">observation_period_start_date</span>, <span class="va">observation_period_end_date</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">365</span></span>
 <span>  <span class="op">)</span> <span class="op">%&gt;%</span></span>
 <span>  <span class="fu">count</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
 <span>  <span class="fu">pull</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -281,12 +281,12 @@ equivalent to the <code><a href="../reference/disconnect.html">disconnect()</a><
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Martijn Schuemie, Marc Suchard.</p>
+<p>Developed by Martijn Schuemie, Marc Suchard, Adam Black.</p>
 </div>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer>

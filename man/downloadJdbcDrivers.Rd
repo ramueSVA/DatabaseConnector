@@ -46,7 +46,7 @@ The following versions of the JDBC drivers are currently used:
 \item SQL Server: V9.2.0
 \item Oracle: V19.8
 \item Spark (Databricks): V2.6.36
-\item Snowflake: V3.16.01
+\item Snowflake: V3.24.0
 \item BigQuery: v1.3.2.1003
 \item InterSystems IRIS: v3.10.2
 }

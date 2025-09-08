@@ -30,6 +30,9 @@ test_that("Extra functions work on regular DBI connection", {
   tables <- getTableNames(connection)
   expect_equal(tables, "cars")
   
+  tables <- getTableNames(connection, databaseSchema = "main")
+  expect_equal(tables, "cars")
+  
   executeSql(connection, "DROP TABLE cars;")
   
   tables <- getTableNames(connection)

@@ -23,6 +23,7 @@ Useful links:
 Authors:
 \itemize{
   \item Marc Suchard
+  \item Adam Black
 }
 
 Other contributors:

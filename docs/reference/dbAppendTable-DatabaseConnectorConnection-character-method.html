@@ -21,7 +21,7 @@ Use dbAppendTableArrow() to append data from an Arrow stream."><!-- mathjax --><
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">7.0.0</span>
       </span>
     </div>
 
@@ -87,8 +87,6 @@ Use <code><a href="https://dbi.r-dbi.org/reference/dbAppendTableArrow.html" clas
 <span>  <span class="va">value</span>,</span>
 <span>  databaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  temporary <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  oracleTempSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  row.names <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -123,16 +121,6 @@ given verbatim, e.g. <code>SQL('"my_schema"."table_name"')</code></p></li>
 
 <dt id="arg-temporary">temporary<a class="anchor" aria-label="anchor" href="#arg-temporary"></a></dt>
 <dd><p>Should the table created as a temp table?</p></dd>
-
-
-<dt id="arg-oracletempschema">oracleTempSchema<a class="anchor" aria-label="anchor" href="#arg-oracletempschema"></a></dt>
-<dd><p>DEPRECATED: use <code>tempEmulationSchema</code> instead.</p></dd>
-
-
-<dt id="arg-tempemulationschema">tempEmulationSchema<a class="anchor" aria-label="anchor" href="#arg-tempemulationschema"></a></dt>
-<dd><p>Some database platforms like Oracle and Impala do not truly support temp tables. To
-emulate temp tables, provide a schema with write privileges where temp tables
-can be created.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -198,11 +186,11 @@ specify the schema.</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Martijn Schuemie, Marc Suchard.</p>
+  <p></p><p>Developed by Martijn Schuemie, Marc Suchard, Adam Black.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer></div>
