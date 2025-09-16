@@ -153,8 +153,7 @@ disconnect(connection)
 
 
 # Reverse dependency checks (taken from GA workflow) ---------------------------
-utils::download.file("https://raw.githubusercontent.com/OHDSI/.github/main/ReverseDependencyCheckFunctions.R", "ReverseDependencyCheckFunctions.R")
-source("ReverseDependencyCheckFunctions.R")
+source("extras/ReverseDependencyCheckFunctions.R")
 saveRDS(prepareForReverseDependencyCheck(), "reverseDependencies.rds")
 reverseDependencies <- readRDS("reverseDependencies.rds")
 if (nrow(reverseDependencies) > 0)
@@ -164,6 +163,9 @@ unlink("ReverseDependencyCheckFunctions.R")
 unlink("reverseDependencies.rds")
 
 # Release package --------------------------------------------------------------
+# pak::pkg_install("r-lib/revdepcheck")
+revdepcheck::revdep_check(num_workers = 4) # Checks packages in CRAN only
+
 devtools::check_win_devel()
 
 rhub::rc_submit(platforms = "atlas")
