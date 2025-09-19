@@ -46,7 +46,8 @@ public class BatchedInsert {
 	}
 	
 	private void trySettingAutoCommit(boolean value) throws SQLException  {
-		if (dbms.equals(SPARK) || dbms.equals(DREMIO)
+		// Some drivers (e.g., Spark, Dremio) do not support or need transaction auto-commit settings
+		if (dbms.equals(SPARK) || dbms.equals(DREMIO))
 			return;
 		try {
 			connection.setAutoCommit(value);
@@ -195,7 +196,6 @@ public class BatchedInsert {
     checkColumns();
     try {
       // Dremio does not support transactions
-
       int offset = 0;
       while (offset < rowCount) {
         int size = Math.min(rowCount - offset, BIG_DATA_BATCH_INSERT_LIMIT);
