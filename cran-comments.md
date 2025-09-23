@@ -1,5 +1,7 @@
 This is a major release, with 6 changes and 5 fixes (see NEWS.md).
 
+All reverse dependency issues should now be resolved.
+
 ---
 
 ## Test environments
