@@ -1,5 +1,3 @@
-# @file DatabaseConnector.R
-#
 # Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of DatabaseConnector
@@ -25,7 +23,12 @@
 NULL
 
 .onLoad <- function(libname, pkgname) {
-  rJava::.jpackage(pkgname, jars = "DatabaseConnector.jar", lib.loc = libname)
+  if (.Platform$OS.type == "windows") {
+    params <- c(getOption("java.parameters"), "-XX:+UseAllWindowsProcessorGroups")
+  } else {
+    params <- getOption("java.parameters")
+  }
+  rJava::.jpackage(pkgname, jars = "DatabaseConnector.jar", lib.loc = libname, parameters = params)
   
   # Verify checksum of JAR:
   storedChecksum <- scan(
@@ -79,3 +82,5 @@ NULL
 NULL
 
 globalVars <- new.env()
+
+DBFETCH_BATCH_SIZE <- 9999

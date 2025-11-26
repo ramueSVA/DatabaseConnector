@@ -86,7 +86,7 @@ executeSql(connection, sql)
 
 databaseSchema <- Sys.getenv("CDM5_ORACLE_CDM54_SCHEMA")
 tables <- getTableNames(connection, databaseSchema, cast = "none")
-tables <- tables[grepl("", tables)]
+tables <- tables[grepl("_stats$|_counts$|groups$|prep$|_prep2|_sets$|_ref$|_data$|oc$|_ids$|exp$|time_period$|.+death$", tables)]
 sql <- paste(sprintf("DROP TABLE %s.%s;", databaseSchema, tables), collapse= "\n")
 executeSql(connection, sql)
 
@@ -138,10 +138,22 @@ sql <- paste(sprintf("DROP TABLE %s.\"%s\" CASCADE;", databaseSchema, tables), c
 executeSql(connection, sql)
 disconnect(connection)
 
+# IRIS
+connection <- connect(
+  dbms = "iris",
+  user = Sys.getenv("CDM_IRIS_USER"),
+  password = URLdecode(Sys.getenv("CDM_IRIS_PASSWORD")),
+  connectionString = Sys.getenv("CDM_IRIS_CONNECTION_STRING")
+)
+databaseSchema <- Sys.getenv("CDM_IRIS_OHDSI_SCHEMA")
+tables <- getTableNames(connection, databaseSchema)
+sql <- paste(sprintf("DROP TABLE %s.\"%s\" CASCADE;", databaseSchema, tables), collapse= "\n")
+executeSql(connection, sql)
+disconnect(connection)
+
 
 # Reverse dependency checks (taken from GA workflow) ---------------------------
-utils::download.file("https://raw.githubusercontent.com/OHDSI/.github/main/ReverseDependencyCheckFunctions.R", "ReverseDependencyCheckFunctions.R")
-source("ReverseDependencyCheckFunctions.R")
+source("extras/ReverseDependencyCheckFunctions.R")
 saveRDS(prepareForReverseDependencyCheck(), "reverseDependencies.rds")
 reverseDependencies <- readRDS("reverseDependencies.rds")
 if (nrow(reverseDependencies) > 0)
@@ -151,6 +163,9 @@ unlink("ReverseDependencyCheckFunctions.R")
 unlink("reverseDependencies.rds")
 
 # Release package --------------------------------------------------------------
+# pak::pkg_install("r-lib/revdepcheck")
+revdepcheck::revdep_check(num_workers = 4) # Checks packages in CRAN only
+
 devtools::check_win_devel()
 
 rhub::rc_submit(platforms = "atlas")

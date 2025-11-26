@@ -57,17 +57,24 @@ DatabaseConnectorDriver <- function() {
 # Connection
 # -----------------------------------------------------------------------------------------
 
-# Borrowed from the odbc package:
-class_cache <- new.env(parent = emptyenv())
+setClass("DatabaseConnectorConnection", 
+         contains = c("DBIConnection"),
+         slots = list(
+           identifierQuote = "character",
+           stringQuote = "character",
+           dbms = "character",
+           uuid = "character"
+         ))
 
-# Simple class prototype to avoid messages about unknown classes from setMethod
-setClass("Microsoft SQL Server", where = class_cache)
+setClass("DatabaseConnectorJdbcConnection",
+         contains = "DatabaseConnectorConnection", 
+         slots = list(jConnection = "jobjRef"))
 
-setClass("DatabaseConnectorConnection", where = class_cache)
-
-setClass("DatabaseConnectorJdbcConnection", where = class_cache)
-
-setClass("DatabaseConnectorDbiConnection", where = class_cache)
+setClass("DatabaseConnectorDbiConnection",
+         contains = "DatabaseConnectorConnection", 
+         slots = list(
+           dbiConnection = "DBIConnection",
+           server = "character"))
 
 #' Create a connection to a DBMS
 #'
@@ -137,38 +144,52 @@ setMethod("dbGetInfo", "DatabaseConnectorConnection", function(dbObj, ...) {
   return(list(db.version = "15.0"))
 })
 
-setMethod("dbQuoteIdentifier", signature("DatabaseConnectorConnection", "character"), function(conn,
-                                                                                               x, ...) {
-  if (length(x) == 0L) {
-    return(DBI::SQL(character()))
-  }
-  if (any(is.na(x))) {
-    abort("Cannot pass NA to dbQuoteIdentifier()")
-  }
-  if (nzchar(conn@identifierQuote)) {
-    x <- gsub(conn@identifierQuote, paste0(
-      conn@identifierQuote,
-      conn@identifierQuote
-    ), x, fixed = TRUE)
-  }
-  return(DBI::SQL(paste0(conn@identifierQuote, encodeString(x), conn@identifierQuote)))
-})
+setMethod("dbQuoteIdentifier", 
+          signature("DatabaseConnectorConnection", "character"), 
+          function(conn, x, ...) {
+            
+            if (dbms(conn) %in% c("spark", "bigquery")) {
+              identifierQuote <- '`'
+            } else {
+              # all other supported dbms use "
+              identifierQuote <- '"'
+            }
+            
+            if (length(x) == 0L) {
+              return(DBI::SQL(character()))
+            }
+            if (any(is.na(x))) {
+              abort("Cannot pass NA to dbQuoteIdentifier()")
+            }
+            if (nzchar(identifierQuote)) {
+              x <- gsub(identifierQuote, paste0(
+                identifierQuote,
+                identifierQuote
+              ), x, fixed = TRUE)
+            }
+            
+            nms <- names(x)
+            res <- DBI::SQL(paste0(identifierQuote, encodeString(x), identifierQuote))
+            names(res) <- nms
+            return(res)
+          })
 
-setMethod(
-  "dbQuoteString",
-  signature("DatabaseConnectorConnection", "character"),
-  function(conn, x, ...) {
-    if (length(x) == 0L) {
-      return(DBI::SQL(character()))
-    }
-    if (any(is.na(x))) {
-      abort("Cannot pass NA to dbQuoteString()")
-    }
-    if (nzchar(conn@stringQuote)) {
-      x <- gsub(conn@stringQuote, paste0(conn@stringQuote, conn@stringQuote), x, fixed = TRUE)
-    }
-    return(DBI::SQL(paste0(conn@stringQuote, encodeString(x), conn@stringQuote)))
-  }
+setMethod("dbQuoteString", 
+          signature("DatabaseConnectorConnection", "character"),
+          function(conn, x, ...) {
+            if (length(x) == 0L) {
+              return(DBI::SQL(character()))
+            }
+            if (any(is.na(x))) {
+              abort("Cannot pass NA to dbQuoteString()")
+            }
+            
+            stringQuote <- "'" # all supported dbms use ' to quote strings
+            if (nzchar(stringQuote)) {
+              x <- gsub(stringQuote, paste0(stringQuote, stringQuote), x, fixed = TRUE)
+            }
+            return(DBI::SQL(paste0(stringQuote, encodeString(x), stringQuote)))
+          }
 )
 
 # Results -----------------------------------------------------------------------------------------
@@ -202,82 +223,28 @@ setClass("DatabaseConnectorDbiResult",
 
 #' @inherit DBI::dbSendQuery title description params details references return seealso
 #' 
-#' @param translate Translate the query using SqlRender?
-#' 
 #' @export
-setMethod(
-  "dbSendQuery",
-  signature("DatabaseConnectorJdbcConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
-    if (rJava::is.jnull(conn@jConnection)) {
-      abort("Connection is closed")
-    }
-    logTrace(paste("Sending SQL:", truncateSql(statement)))
-    startTime <- Sys.time()
-    
-    dbms <- dbms(conn)
-    if (translate) {
-      statement <- translateStatement(
-        sql = statement,
-        targetDialect = dbms
-      )
-    }
-    # For Oracle, remove trailing semicolon:
-    statement <- gsub(";\\s*$", "", statement)
-    tryCatch(
-      batchedQuery <- rJava::.jnew(
-        "org.ohdsi.databaseConnector.BatchedQuery",
-        conn@jConnection,
-        statement,
-        dbms
-      ),
-      error = function(error) {
-        # Rethrowing error to avoid 'no field, method or inner class called 'use_cli_format''
-        # error by rlang (see https://github.com/OHDSI/DatabaseConnector/issues/235)
-        rlang::abort(error$message)
-      }
-    )
-    
-    result <- new("DatabaseConnectorJdbcResult",
-                  content = batchedQuery,
-                  type = "batchedQuery",
-                  statement = statement,
-                  dbms = dbms
-    )
-    delta <- Sys.time() - startTime
-    logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-    return(result)
-  }
+setMethod("dbSendQuery",
+          signature("DatabaseConnectorJdbcConnection", "character"),
+          function(conn, statement, ...) {
+            result <- lowLevelDbSendQuery(conn, statement)
+            return(result)
+          }
 )
 
 #' @inherit DBI::dbSendQuery title description params details references return seealso
 #' 
-#' @param translate Translate the query using SqlRender?
-#' 
 #' @export
-setMethod(
-  "dbSendQuery",
-  signature("DatabaseConnectorDbiConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
-    if (translate) {
-      statement <- translateStatement(
-        sql = statement,
-        targetDialect = dbms(conn)
-      )
-    }
-    logTrace(paste("Sending SQL:", truncateSql(statement)))
-    startTime <- Sys.time()
-    
-    resultSet <- DBI::dbSendQuery(conn@dbiConnection, statement, ...)
-    result <- new("DatabaseConnectorDbiResult",
-                  resultSet = resultSet,
-                  dbms = dbms(conn)
-    )
-    
-    delta <- Sys.time() - startTime
-    logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-    return(result)
-  }
+setMethod("dbSendQuery",
+          signature("DatabaseConnectorDbiConnection", "character"),
+          function(conn, statement, ...) {
+            resultSet <- DBI::dbSendQuery(conn@dbiConnection, statement, ...)
+            result <- new("DatabaseConnectorDbiResult",
+                          resultSet = resultSet,
+                          dbms = dbms(conn)
+            )
+            return(result)
+          }
 )
 
 #' @inherit DBI::dbHasCompleted title description params details references return seealso
@@ -342,30 +309,22 @@ setMethod("dbGetRowCount", "DatabaseConnectorDbiResult", function(res, ...) {
 #' @inherit DBI::dbFetch title description params details references return seealso
 #' @export
 setMethod("dbFetch", "DatabaseConnectorJdbcResult", function(res, n = -1, ...) {
+  # Using n == DBFETCH_BATCH_SIZE as signal to fetch as many as fits in memory:
   tryCatch({
-    if (n == -1 | is.infinite(n)) {
-      columns <- getAllBatches(batchedQuery = res@content,
-                               datesAsString = FALSE,
-                               integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                              default = TRUE),
-                               integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                            default = TRUE))
+    if (n != DBFETCH_BATCH_SIZE & (n == -1 | is.infinite(n))) {
+      results <- getAllBatches(res@content)
     } else {
-      warn("The 'n' argument is set to something other than -1 or Inf, and will be ignored. Fetching as many rows as fits in the Java VM.",
-           .frequency = "regularly",
-           .frequency_id = "dbFetchN"
-      )
+      if (n != DBFETCH_BATCH_SIZE) {
+        warn("The 'n' argument is set to something other than -1 or Inf, and will be ignored. Fetching as many rows as fits in the Java VM.",
+             .frequency = "regularly",
+             .frequency_id = "dbFetchN"
+        )
+      }
       rJava::.jcall(res@content, "V", "fetchBatch")
-      columns <- parseJdbcColumnData(batchedQuery = res@content,
-                                     datesAsString = FALSE,
-                                     integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                    default = TRUE),
-                                     integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                  default = TRUE))
+      results <- parseJdbcColumnData(batchedQuery = res@content)
     }
-    columns <- convertFields(res@dbms, columns)
-    colnames(columns) <- tolower(colnames(columns))
-    return(columns)
+    results <- convertFields(results, res@dbms) # dbms specific conversions
+    return(results)
   },
   error = function(error) {
     # Rethrowing error to avoid 'no field, method or inner class called 'use_cli_format'  
@@ -378,9 +337,6 @@ setMethod("dbFetch", "DatabaseConnectorJdbcResult", function(res, n = -1, ...) {
 #' @export
 setMethod("dbFetch", "DatabaseConnectorDbiResult", function(res, n = -1, ...) {
   columns <- DBI::dbFetch(res@resultSet, n, ...)
-  columns <- convertFields(res@dbms, columns)
-  columns <- dbFetchIntegerToNumeric(columns)
-  colnames(columns) <- tolower(colnames(columns))
   return(columns)
 })
 
@@ -420,42 +376,40 @@ setMethod("dbGetRowsAffected", "DatabaseConnectorDbiResult", function(res, ...) 
 
 #' @inherit DBI::dbGetQuery title description params details references return seealso
 #' 
-#' @param translate Translate the query using SqlRender?
+#' @export
+setMethod("dbGetQuery",
+          signature("DatabaseConnectorJdbcConnection", "character"),
+          function(conn, statement, ...) {
+            if (!DBI::dbIsValid(conn)) {
+              abort("Connection is closed")
+            }
+            resultSet <- DBI::dbSendQuery(conn, statement)
+            results <- DBI::dbFetch(resultSet)
+            return(results)
+          }
+)
+
+#' @inherit DBI::dbGetQuery title description params details references return seealso
 #' 
 #' @export
 setMethod(
   "dbGetQuery",
-  signature("DatabaseConnectorConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
-    if (translate) {
-      statement <- translateStatement(
-        sql = statement,
-        targetDialect = dbms(conn)
-      )
-    }
-    result <- querySql(conn, statement)
-    colnames(result) <- tolower(colnames(result))
+  signature("DatabaseConnectorDbiConnection", "character"),
+  function(conn, statement, ...) {
+    result <- DBI::dbGetQuery(conn@dbiConnection, statement)
     return(result)
   }
 )
 
 #' @inherit DBI::dbSendStatement title description params details references return seealso
 #' 
-#' @param translate Translate the query using SqlRender?
-#' 
 #' @export
 setMethod(
   "dbSendStatement",
   signature("DatabaseConnectorConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
-    if (translate) {
-      statement <- translateStatement(
-        sql = statement,
-        targetDialect = dbms(conn)
-      )
-    }
-    rowsAffected <- executeSql(connection = conn, sql = statement)
-    rowsAffected <- rJava::.jnew("java/lang/Double", as.double(sum(rowsAffected)))
+  function(conn, statement, ...) {
+    rowsAffected <- DBI::dbExecute(conn, statement)
+    rowsAffected <- rJava::.jnew("java/lang/Double", as.double(rowsAffected))
     result <- new("DatabaseConnectorJdbcResult",
                   content = rowsAffected,
                   type = "rowsAffected",
@@ -466,27 +420,29 @@ setMethod(
 
 #' @inherit DBI::dbExecute title description params details references return seealso
 #' 
-#' @param translate Translate the query using SqlRender?
+#' @export
+setMethod(
+  "dbExecute",
+  signature("DatabaseConnectorJdbcConnection", "character"),
+  function(conn, statement, ...) {
+    rowsAffected <- 0
+    statements <- SqlRender::splitSql(statement)
+    if (length(statements) < 1) {
+      warn("Ignoring remaining part of query: ", paste(statements[2:length(statements)], collapse = " "))
+    }
+    rowsAffected <- rowsAffected + lowLevelExecuteSql(conn, statements[1])
+    return(rowsAffected)
+  }
+)
+
+#' @inherit DBI::dbExecute title description params details references return seealso
 #' 
 #' @export
 setMethod(
   "dbExecute",
-  signature("DatabaseConnectorConnection", "character"),
-  function(conn, statement, translate = TRUE, ...) {
-    if (isDbplyrSql(statement) && dbms(conn) %in% c("oracle", "bigquery", "spark", "hive") && grepl("^UPDATE STATISTICS", statement)) {
-      # These platforms don't support this, so SqlRender translates to an empty string, which causes errors down the line.
-      return(0)
-    }
-    if (translate) {
-      statement <- translateStatement(
-        sql = statement,
-        targetDialect = dbms(conn)
-      )
-    }
-    rowsAffected <- 0
-    for (sql in SqlRender::splitSql(statement)) {
-      rowsAffected <- rowsAffected + executeSql(conn, sql)
-    }
+  signature("DatabaseConnectorDbiConnection", "character"),
+  function(conn, statement, ...) {
+    rowsAffected <- DBI::dbExecute(conn@dbiConnection, statement)
     return(rowsAffected)
   }
 )
@@ -510,7 +466,7 @@ setMethod(
       schema = databaseSchemaSplit[[2]],
       table = name
     )
-    return(tolower(columns$name))
+    return(columns$name)
   }
 )
 
@@ -539,21 +495,14 @@ setMethod(
 #' @param overwrite          Overwrite an existing table (if exists)?
 #' @param append             Append to existing table?
 #' @param temporary          Should the table created as a temp table?
-#' @template TempEmulationSchema
 #
 #' @export
 setMethod(
   "dbWriteTable",
   "DatabaseConnectorConnection",
   function(conn,
-           name, value, databaseSchema = NULL, overwrite = FALSE, append = FALSE, temporary = FALSE, oracleTempSchema = NULL, tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"), ...) {
-    if (!is.null(oracleTempSchema) && oracleTempSchema != "") {
-      warn("The 'oracleTempSchema' argument is deprecated. Use 'tempEmulationSchema' instead.",
-           .frequency = "regularly",
-           .frequency_id = "oracleTempSchema"
-      )
-      tempEmulationSchema <- oracleTempSchema
-    }
+           name, value, databaseSchema = NULL, overwrite = FALSE, append = FALSE, temporary = FALSE, ...) {
+    
     if (overwrite) {
       append <- FALSE
     }
@@ -564,8 +513,7 @@ setMethod(
       data = value,
       dropTableIfExists = overwrite,
       createTable = !append,
-      tempTable = temporary, 
-      tempEmulationSchema = tempEmulationSchema
+      tempTable = temporary
     )
     invisible(TRUE)
   }
@@ -574,7 +522,6 @@ setMethod(
 #' @inherit DBI::dbAppendTable title description params details references return seealso
 #' 
 #' @param temporary          Should the table created as a temp table?
-#' @template TempEmulationSchema
 #' @template DatabaseSchema
 #'
 #' @export
@@ -582,14 +529,8 @@ setMethod(
   "dbAppendTable",
   signature("DatabaseConnectorConnection", "character"),
   function(conn,
-           name, value, databaseSchema = NULL, temporary = FALSE, oracleTempSchema = NULL, tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"), ..., row.names = NULL) {
-    if (!is.null(oracleTempSchema) && oracleTempSchema != "") {
-      warn("The 'oracleTempSchema' argument is deprecated. Use 'tempEmulationSchema' instead.",
-           .frequency = "regularly",
-           .frequency_id = "oracleTempSchema"
-      )
-      tempEmulationSchema <- oracleTempSchema
-    }
+           name, value, databaseSchema = NULL, temporary = FALSE, ..., row.names = NULL) {
+    
     insertTable(
       connection = conn,
       databaseSchema = databaseSchema,
@@ -597,8 +538,7 @@ setMethod(
       data = value,
       dropTableIfExists = FALSE,
       createTable = FALSE,
-      tempTable = temporary, 
-      tempEmulationSchema = tempEmulationSchema
+      tempTable = temporary
     )
     invisible(TRUE)
   }
@@ -607,7 +547,6 @@ setMethod(
 #' @inherit DBI::dbCreateTable title description params details references return seealso
 #' 
 #' @param temporary          Should the table created as a temp table?
-#' @template TempEmulationSchema
 #' @template DatabaseSchema
 #' 
 #' @export
@@ -615,14 +554,8 @@ setMethod(
   "dbCreateTable",
   "DatabaseConnectorConnection",
   function(conn,
-           name, fields, databaseSchema = NULL, oracleTempSchema = NULL, tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"), ..., row.names = NULL, temporary = FALSE) {
-    if (!is.null(oracleTempSchema) && oracleTempSchema != "") {
-      warn("The 'oracleTempSchema' argument is deprecated. Use 'tempEmulationSchema' instead.",
-           .frequency = "regularly",
-           .frequency_id = "oracleTempSchema"
-      )
-      tempEmulationSchema <- oracleTempSchema
-    }
+           name, fields, databaseSchema = NULL, ..., row.names = NULL, temporary = FALSE) {
+    
     insertTable(
       connection = conn, 
       databaseSchema = databaseSchema,
@@ -630,8 +563,7 @@ setMethod(
       data = fields[FALSE, ], 
       dropTableIfExists = TRUE,
       createTable = TRUE, 
-      tempTable = temporary, 
-      tempEmulationSchema = tempEmulationSchema
+      tempTable = temporary
     )
     invisible(TRUE)
   }
@@ -640,68 +572,43 @@ setMethod(
 #' @inherit DBI::dbReadTable title description params details references return seealso
 #' 
 #' @template DatabaseSchema
-#' @template TempEmulationSchema
 #'
 #' @export
 setMethod("dbReadTable", 
           signature("DatabaseConnectorConnection", "character"), 
           function(conn, 
                    name,
-                   databaseSchema = NULL, 
-                   oracleTempSchema = NULL, 
-                   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+                   databaseSchema = NULL,
                    ...) {
-            if (!is.null(oracleTempSchema) && oracleTempSchema != "") {
-              warn("The 'oracleTempSchema' argument is deprecated. Use 'tempEmulationSchema' instead.",
-                   .frequency = "regularly",
-                   .frequency_id = "oracleTempSchema"
-              )
-              tempEmulationSchema <- oracleTempSchema
-            }
+            
             if (!is.null(databaseSchema)) {
               name <- paste(databaseSchema, name, sep = ".")
             }
             sql <- "SELECT * FROM @table;"
             sql <- SqlRender::render(sql = sql, table = name)
-            sql <- translateStatement(
-              sql = sql,
-              targetDialect = dbms(conn),
-              tempEmulationSchema = tempEmulationSchema
-            )
-            return(querySql(conn, sql))
+            return(DBI::dbGetQuery(conn, sql))
           })
 
 #' @inherit DBI::dbRemoveTable title description params details references return seealso
 #' 
 #' @template DatabaseSchema
-#' @template TempEmulationSchema
 #'
 #' @export
 setMethod(
   "dbRemoveTable",
   "DatabaseConnectorConnection",
   function(conn, name,
-           databaseSchema = NULL, oracleTempSchema = NULL, tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"), ...) {
-    if (!is.null(oracleTempSchema) && oracleTempSchema != "") {
-      warn("The 'oracleTempSchema' argument is deprecated. Use 'tempEmulationSchema' instead.",
-           .frequency = "regularly",
-           .frequency_id = "oracleTempSchema"
-      )
-      tempEmulationSchema <- oracleTempSchema
-    }
+           databaseSchema = NULL, ...) {
+    
     if (!is.null(databaseSchema)) {
       name <- paste(databaseSchema, name, sep = ".")
     }
-    sql <- "TRUNCATE TABLE @table; DROP TABLE @table;"
+    sql <- "TRUNCATE TABLE @table;"
     sql <- SqlRender::render(sql = sql, table = name)
-    sql <- translateStatement(
-      sql = sql,
-      targetDialect = dbms(conn),
-      tempEmulationSchema = tempEmulationSchema
-    )
-    for (statement in SqlRender::splitSql(sql)) {
-      executeSql(conn, statement)
-    }
+    DBI::dbExecute(conn, sql)
+    sql <- "DROP TABLE @table;"
+    sql <- SqlRender::render(sql = sql, table = name)
+    DBI::dbExecute(conn, sql)
     return(TRUE)
   }
 )
@@ -750,25 +657,6 @@ isDbplyrSql <- function(sql) {
   return(is(sql, "sql"))
 }
 
-translateStatement <- function(sql, targetDialect, tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")) {
-  debug <- isTRUE(getOption("DEBUG_DATABASECONNECTOR_DBPLYR"))
-  if (debug) {
-    message(paste("SQL in:", sql))
-  }
-  if (isDbplyrSql(sql)) {
-    if (!grepl(";\\s*$", sql)) {
-      # SqlRender requires statements to end with semicolon, but dbplyr does not generate these:
-      sql <- paste0(sql, ";")
-    }
-    sql <- translateDateFunctions(sql)
-  }
-  sql <- SqlRender::translate(sql = sql, targetDialect = targetDialect, tempEmulationSchema = tempEmulationSchema)
-  if (debug) {
-    message(paste("SQL out:", sql))
-  }
-  return(sql)
-}
-
 splitDatabaseSchema <- function(databaseSchema, dbms) {
   if (is.null(databaseSchema)) {
     return(list(NULL, NULL))
@@ -785,22 +673,4 @@ splitDatabaseSchema <- function(databaseSchema, dbms) {
   } else {
     return(list(NULL, databaseSchema))
   }
-}
-
-dbFetchIntegerToNumeric <- function(columns) {
-  if (getOption("databaseConnectorIntegerAsNumeric", default = TRUE)) {
-    for (i in seq_len(ncol(columns))) {
-      if (is(columns[[i]], "integer")) {
-        columns[[i]] <- as.numeric(columns[[i]])
-      }
-    }
-  }
-  if (getOption("databaseConnectorInteger64AsNumeric", default = TRUE)) {
-    for (i in seq_len(ncol(columns))) {
-      if (is(columns[[i]], "integer64")) {
-        columns[[i]] <- convertInteger64ToNumeric(columns[[i]])
-      }
-    }
-  }
-  return(columns)
 }

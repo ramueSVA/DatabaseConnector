@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">7.0.0</span>
       </span>
     </div>
 
@@ -98,22 +98,6 @@
         </td>
         <td><p>Compress files and/or folders into a single zip file</p></td>
       </tr><tr><td>
-          <p><code><a href="dateAdd.html">dateAdd()</a></code> </p>
-        </td>
-        <td><p>Add an interval to a date</p></td>
-      </tr><tr><td>
-          <p><code><a href="dateDiff.html">dateDiff()</a></code> </p>
-        </td>
-        <td><p>Compute difference between dates</p></td>
-      </tr><tr><td>
-          <p><code><a href="dateFromParts.html">dateFromParts()</a></code> </p>
-        </td>
-        <td><p>Construct a date from parts</p></td>
-      </tr><tr><td>
-          <p><code><a href="day.html">day()</a></code> </p>
-        </td>
-        <td><p>Extract the day from a date</p></td>
-      </tr><tr><td>
           <p><code><a href="dbAppendTable-DatabaseConnectorConnection-character-method.html">dbAppendTable(<i>&lt;DatabaseConnectorConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
         </td>
         <td><p>Insert rows into a table</p></td>
@@ -146,7 +130,11 @@
         </td>
         <td><p>Disconnect (close) a connection</p></td>
       </tr><tr><td>
-          <p><code><a href="dbExecute-DatabaseConnectorConnection-character-method.html">dbExecute(<i>&lt;DatabaseConnectorConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
+          <p><code><a href="dbExecute-DatabaseConnectorDbiConnection-character-method.html">dbExecute(<i>&lt;DatabaseConnectorDbiConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Change database state</p></td>
+      </tr><tr><td>
+          <p><code><a href="dbExecute-DatabaseConnectorJdbcConnection-character-method.html">dbExecute(<i>&lt;DatabaseConnectorJdbcConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
         </td>
         <td><p>Change database state</p></td>
       </tr><tr><td>
@@ -170,7 +158,11 @@
         </td>
         <td><p>Get DBMS metadata</p></td>
       </tr><tr><td>
-          <p><code><a href="dbGetQuery-DatabaseConnectorConnection-character-method.html">dbGetQuery(<i>&lt;DatabaseConnectorConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
+          <p><code><a href="dbGetQuery-DatabaseConnectorDbiConnection-character-method.html">dbGetQuery(<i>&lt;DatabaseConnectorDbiConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Retrieve results from a query</p></td>
+      </tr><tr><td>
+          <p><code><a href="dbGetQuery-DatabaseConnectorJdbcConnection-character-method.html">dbGetQuery(<i>&lt;DatabaseConnectorJdbcConnection&gt;</i>,<i>&lt;character&gt;</i>)</a></code> </p>
         </td>
         <td><p>Retrieve results from a query</p></td>
       </tr><tr><td>
@@ -266,10 +258,6 @@
         </td>
         <td><p>Drop all emulated temp tables.</p></td>
       </tr><tr><td>
-          <p><code><a href="eoMonth.html">eoMonth()</a></code> </p>
-        </td>
-        <td><p>Return the end of the month</p></td>
-      </tr><tr><td>
           <p><code><a href="executeSql.html">executeSql()</a></code> </p>
         </td>
         <td><p>Execute SQL code</p></td>
@@ -306,22 +294,6 @@
         </td>
         <td><p>How to download and use JDBC drivers for the various data platforms.</p></td>
       </tr><tr><td>
-          <p><code><a href="lowLevelExecuteSql.html">lowLevelExecuteSql()</a></code> </p>
-        </td>
-        <td><p>Execute SQL code</p></td>
-      </tr><tr><td>
-          <p><code><a href="lowLevelQuerySql.html">lowLevelQuerySql()</a></code> </p>
-        </td>
-        <td><p>Low level function for retrieving data to a data frame</p></td>
-      </tr><tr><td>
-          <p><code><a href="lowLevelQuerySqlToAndromeda.html">lowLevelQuerySqlToAndromeda()</a></code> </p>
-        </td>
-        <td><p>Low level function for retrieving data to a local Andromeda object</p></td>
-      </tr><tr><td>
-          <p><code><a href="month.html">month()</a></code> </p>
-        </td>
-        <td><p>Extract the month from a date</p></td>
-      </tr><tr><td>
           <p><code><a href="querySql.html">querySql()</a></code> </p>
         </td>
         <td><p>Retrieve data to a data.frame</p></td>
@@ -349,10 +321,6 @@
           <p><code><a href="requiresTempEmulation.html">requiresTempEmulation()</a></code> </p>
         </td>
         <td><p>Does the DBMS require temp table emulation?</p></td>
-      </tr><tr><td>
-          <p><code><a href="year.html">year()</a></code> </p>
-        </td>
-        <td><p>Extract the year from a date</p></td>
       </tr></tbody></table></div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -362,11 +330,11 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Martijn Schuemie, Marc Suchard.</p>
+  <p></p><p>Developed by Martijn Schuemie, Marc Suchard, Adam Black.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer></div>

@@ -19,11 +19,12 @@ public class BatchedInsert {
 	public static int		DATE						= 3;
 	public static int		DATETIME					= 4;
 	public static int		BIGINT						= 5;
-	private static String   SPARK                       = "spark";
-	private static String   SNOWFLAKE                   = "snowflake";
-  private static String   DREMIO                      = "dremio";
-	private static String   BIGQUERY                    = "bigquery";
-	
+	public static int		BOOLEAN						= 6;
+	private static String   SPARK         = "spark";
+	private static String   SNOWFLAKE     = "snowflake";
+	private static String   BIGQUERY      = "bigquery";
+  private static String   DREMIO        = "dremio";
+
 	public static final int	BIG_DATA_BATCH_INSERT_LIMIT	= 1000;
 
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
@@ -63,6 +64,9 @@ public class BatchedInsert {
 			if (columnTypes[i] == INTEGER) {
 				if (((int[]) columns[i]).length != rowCount)
 					throw new RuntimeException("Column " + (i + 1) + " data not of correct length");
+			} else if (columnTypes[i] == BOOLEAN) {
+				if (((int[]) columns[i]).length != rowCount)
+					throw new RuntimeException("Column " + (i + 1) + " data not of correct length");
 			} else if (columnTypes[i] == NUMERIC) {
 				if (((double[]) columns[i]).length != rowCount)
 					throw new RuntimeException("Column " + (i + 1) + " data not of correct length");
@@ -83,6 +87,17 @@ public class BatchedInsert {
 				statement.setObject(statementIndex, null);
 			else
 				statement.setInt(statementIndex, value);
+		} else if (columnTypes[columnIndex] == BOOLEAN) {
+			int value = ((int[]) columns[columnIndex])[rowIndex];
+			if (value == -1) {
+				statement.setObject(statementIndex, null);
+			} else if (value == 1) {
+				statement.setBoolean(statementIndex, true);
+			} else if (value == 0) {
+				statement.setBoolean(statementIndex, false);
+			} else {
+				throw new RuntimeException("Boolean values must be encoded as 1 (true) 0 (false) or -1 (NA) and not " + value);
+			}
 		} else if (columnTypes[columnIndex] == NUMERIC) {
 			double value = ((double[]) columns[columnIndex])[rowIndex];
 			if (Double.isNaN(value))
@@ -142,13 +157,18 @@ public class BatchedInsert {
 			statement.close();
 			connection.clearWarnings();
 			trySettingAutoCommit(true);
+			return true;
+		} catch (SQLException e) {
+			if (!dbms.equals(SPARK)) {
+				connection.rollback();
+			}
+			throw e;
 		} finally {
 			for (int i = 0; i < columnCount; i++) {
 				columns[i] = null;
 			}
 			rowCount = 0;
 		}
-		return true;
 	}
 
 	/**
@@ -183,13 +203,16 @@ public class BatchedInsert {
 				trySettingAutoCommit(true);
 				offset += BIG_DATA_BATCH_INSERT_LIMIT;
 			}
+			return true;
+		} catch (SQLException e) {
+			connection.rollback();
+			throw e;
 		} finally {
 			for (int i = 0; i < columnCount; i++) {
 				columns[i] = null;
 			}
 			rowCount = 0;
 		}
-		return true;
 	}
 
   private boolean executeDremioBatch() throws SQLException, ParseException {
@@ -250,6 +273,13 @@ public class BatchedInsert {
 		rowCount = column.length;
 	}
 	
+	public void setBoolean(int columnIndex, int[] column) {
+		// represent boolean as int 1 for true, 0 for false, -1 for NA
+		columns[columnIndex - 1] = column;
+		columnTypes[columnIndex - 1] = BOOLEAN;
+		rowCount = column.length;
+	}
+
 	public void setNumeric(int columnIndex, double[] column) {
 		columns[columnIndex - 1] = column;
 		columnTypes[columnIndex - 1] = NUMERIC;
@@ -284,6 +314,10 @@ public class BatchedInsert {
 		setInteger(columnIndex, new int[] { column });
 	}
 	
+	public void setBoolean(int columnIndex, int column) {
+		setBoolean(columnIndex, new int[] { column });
+	}
+
 	public void setNumeric(int columnIndex, double column) {
 		setNumeric(columnIndex, new double[] { column });
 	}

@@ -47,7 +47,7 @@ setMethod(
       } else {
         tables <- DBI::dbListTables(conn@dbiConnection, schema = databaseSchema)
       }
-      return(tolower(tables))
+      return(tables)
     }
     
     if (is.null(databaseSchema)) {
@@ -89,7 +89,7 @@ setMethod(
     while (rJava::.jcall(resultSet, "Z", "next")) {
       tables <- c(tables, rJava::.jcall(resultSet, "S", "getString", "TABLE_NAME"))
     }
-    return(tolower(tables))
+    return(tables)
   })
 
 #' List all tables in a database schema.
@@ -117,7 +117,8 @@ getTableNames <- function(connection, databaseSchema = NULL, cast = "lower") {
   } else if (is(connection, "DatabaseConnectorConnection")) {
     tableNames <- DBI::dbListTables(conn = connection, databaseSchema = databaseSchema)
   } else if (is(connection, "PqConnection") || is(connection, "RedshiftConnection") || is(connection, "duckdb_connection")) {
-    stopifnot(length(databaseSchemaSplit) == 1)
+    databaseSchemaSplit <- strsplit(databaseSchema, "\\.")[[1]]
+    if (length(databaseSchemaSplit) > 1) rlang::abort("databaseSchema cannot contain a dot (.) on this platform")
     sql <- paste0("SELECT table_name FROM information_schema.tables WHERE table_schema = '", databaseSchema, "';")
     tableNames <- DBI::dbGetQuery(connection, sql)[["table_name"]]
   } else if (is(connection, "Microsoft SQL Server")) {
@@ -132,6 +133,37 @@ getTableNames <- function(connection, databaseSchema = NULL, cast = "lower") {
   } else if (is(connection, "SQLiteConnection")) {
     if (databaseSchema != "main") rlang::abort("The only schema supported on SQLite is 'main'")
     tableNames <- DBI::dbListTables(connection)
+  } else if (is(connection, "Snowflake")) {
+    databaseSchemaSplit <- strsplit(databaseSchema, "\\.")[[1]]
+    if (length(databaseSchemaSplit) == 2) {
+      sql <- paste0("select table_name from ", databaseSchemaSplit[1], ".information_schema.tables where table_schema = '", databaseSchemaSplit[2], "';")
+    } else if (length(databaseSchemaSplit) == 1){
+      sql <- paste0("select table_name from information_schema.tables where table_schema = '", databaseSchemaSplit[1], "';")
+    } else {
+      rlang::abort("databaseSchema can contain at most one dot (.)")
+    }
+    tableNames <- DBI::dbGetQuery(connection, sql)[[1]]
+  } else if (is(connection, "Spark SQL")) {
+    # spark odbc connection
+    sql <- paste("SHOW TABLES", if (!is.null(databaseSchema)) paste("IN", databaseSchema))
+    tableNames <- DBI::dbGetQuery(connection, sql)
+    tableNames <- tableNames[tableNames$isTemporary == FALSE, "tableName"]
+  } else if (is(connection, "BigQueryConnection")) {
+    # bigrquery connection
+    databaseSchemaSplit <- strsplit(databaseSchema, "\\.")[[1]]
+    if (length(databaseSchemaSplit) == 1) {
+      tableNames <- DBI::dbGetQuery(connection,
+         paste0("SELECT table_name ",
+                "FROM ", databaseSchemaSplit, ".INFORMATION_SCHEMA.TABLES ",
+                "WHERE table_schema = '", databaseSchemaSplit, "'"))[[1]]
+    } else if (length(databaseSchemaSplit) == 2) {
+      tableNames <- DBI::dbGetQuery(connection,
+        paste0("SELECT table_name ",
+               "FROM ", databaseSchemaSplit[[1]], ".", databaseSchemaSplit[[2]], ".INFORMATION_SCHEMA.TABLES ",
+               "WHERE table_schema = '", databaseSchemaSplit[[2]], "'"))[[1]]
+    } else {
+      rlang::abort("databaseSchema can contain at most one dot (.)")
+    }
   } else {
     rlang::abort(paste(paste(class(connection), collapse = ", "), "connection not supported"))
   }

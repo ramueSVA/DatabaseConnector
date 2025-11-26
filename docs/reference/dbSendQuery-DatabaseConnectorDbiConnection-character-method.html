@@ -24,7 +24,7 @@ as an Arrow object."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/a
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">7.0.0</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@ as an Arrow object.</p>
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S4 method for class 'DatabaseConnectorDbiConnection,character'</span></span>
-<span><span class="fu">dbSendQuery</span><span class="op">(</span><span class="va">conn</span>, <span class="va">statement</span>, translate <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">dbSendQuery</span><span class="op">(</span><span class="va">conn</span>, <span class="va">statement</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -101,10 +101,6 @@ as an Arrow object.</p>
 
 <dt id="arg-statement">statement<a class="anchor" aria-label="anchor" href="#arg-statement"></a></dt>
 <dd><p>a character string containing SQL.</p></dd>
-
-
-<dt id="arg-translate">translate<a class="anchor" aria-label="anchor" href="#arg-translate"></a></dt>
-<dd><p>Translate the query using SqlRender?</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -184,11 +180,11 @@ drivers' <code>dbSendQuery()</code> documentation for details.</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Martijn Schuemie, Marc Suchard.</p>
+  <p></p><p>Developed by Martijn Schuemie, Marc Suchard, Adam Black.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer></div>

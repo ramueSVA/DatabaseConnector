@@ -1,10 +1,40 @@
+DatabaseConnector 7.0.0
+=======================
+
+Changes:
+
+1. Changed `dplyr` back-end from using `SqlRender` to native back-ends.
+
+2. Finally dropped `oracleTempEmulationSchema` argument everywhere, after having been deprecated for many years.
+
+3. Fully supporting logical types.
+
+4. When not using `snakeCaseToCamelCase = TRUE`, column names are now returned in the original case to conform with DBI.
+
+5. All `DatabaseConnector` unique top-level functions (e.g. `querySql()` and `getTableNames()`) now work on all `DBI` connections, not just `DatabaseConnector` connections. This is for improved separation of code, and should make it easier to add and remove new database platforms in the future.
+
+6. On connecting to DuckDB checks if the ICU extension is installed and if not, attempts to install it. The ICU extension is needed for some date and time functions such as `CURRENT_DATE`.
+
+
+Bugfixes:
+
+1. Remove direct call to `bit64` S3 method to avoid issues in the future.
+
+2. Fixed error when calling `getTableNames()` on a `DuckDB` connection.
+
+3. Fixed empty schema list in RStudio Connection pane for IRIS.
+
+4. Avoid startup warnings on CRAN's Windows testing environments.
+
+5. Updated Snowflake driver to 3.24.0.
+
+
 DatabaseConnector 6.4.0
 =======================
 
 Changes:
 
 - Adding support for InterSystems IRIS.
-
 
 
 DatabaseConnector 6.3.3
