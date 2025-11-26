@@ -33,7 +33,7 @@
 #' @export
 computeDataHash <- function(connection, databaseSchema, tables = NULL, progressBar = TRUE) {
   errorMessages <- checkmate::makeAssertCollection()
-  checkmate::assertClass(connection, "DatabaseConnectorConnection", add = errorMessages)
+  checkmate::assertClass(connection, "DBIConnection", add = errorMessages)
   checkmate::assertCharacter(databaseSchema, len = 1, add = errorMessages)
   checkmate::assertCharacter(tables, min.len = 1, null.ok = TRUE, add = errorMessages)
   checkmate::reportAssertions(collection = errorMessages)
@@ -91,7 +91,7 @@ getTableString <- function(tableName, connection, databaseSchema) {
     sql = "SELECT COUNT(*) FROM @database_schema.@table_name;",
     database_schema = databaseSchema,
     table_name = tableName
-  )[, 1]
+  )[[1]]
   return(paste(tableName, paste(paste(fieldNames, fieldClasses, sep = "="), collapse = ", "), sprintf("nrow=%d", count)))
 }
 
@@ -105,9 +105,7 @@ bulkHashSqlServer <- function(connection, databaseSchema, tables) {
     schema <- cleanSchemaName(databaseSchema[2])
   }
   tryCatch(
-    lowLevelExecuteSql(
-      connection = connection,
-      sql = SqlRender::render("USE [@database];", database = database)
+    DBI::dbExecute(connection, SqlRender::render("USE [@database];", database = database)
     ),
     error = function(e) {
       # Do nothing (assuming this is Azure, where you can't use USE)

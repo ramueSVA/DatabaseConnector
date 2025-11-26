@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DatabaseConnector</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">6.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">7.0.0</span>
       </span>
     </div>
 
@@ -67,7 +67,23 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="6.4.0" id="databaseconnector-640">DatabaseConnector 6.4.0<a class="anchor" aria-label="anchor" href="#databaseconnector-640"></a></h2>
+<h2 class="page-header" data-toc-text="7.0.0" id="databaseconnector-700">DatabaseConnector 7.0.0<a class="anchor" aria-label="anchor" href="#databaseconnector-700"></a></h2>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Changed <code>dplyr</code> back-end from using <code>SqlRender</code> to native back-ends.</p></li>
+<li><p>Finally dropped <code>oracleTempEmulationSchema</code> argument everywhere, after having been deprecated for many years.</p></li>
+<li><p>Fully supporting logical types.</p></li>
+<li><p>When not using <code>snakeCaseToCamelCase = TRUE</code>, column names are now returned in the original case to conform with DBI.</p></li>
+<li><p>All <code>DatabaseConnector</code> unique top-level functions (e.g. <code><a href="../reference/querySql.html">querySql()</a></code> and <code><a href="../reference/getTableNames.html">getTableNames()</a></code>) now work on all <code>DBI</code> connections, not just <code>DatabaseConnector</code> connections. This is for improved separation of code, and should make it easier to add and remove new database platforms in the future.</p></li>
+<li><p>On connecting to DuckDB checks if the ICU extension is installed and if not, attempts to install it. The ICU extension is needed for some date and time functions such as <code>CURRENT_DATE</code>.</p></li>
+</ol><p>Bugfixes:</p>
+<ol style="list-style-type: decimal"><li><p>Remove direct call to <code>bit64</code> S3 method to avoid issues in the future.</p></li>
+<li><p>Fixed error when calling <code><a href="../reference/getTableNames.html">getTableNames()</a></code> on a <code>DuckDB</code> connection.</p></li>
+<li><p>Fixed empty schema list in RStudio Connection pane for IRIS.</p></li>
+<li><p>Avoid startup warnings on CRAN’s Windows testing environments.</p></li>
+<li><p>Updated Snowflake driver to 3.24.0.</p></li>
+</ol></div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="6.4.0" id="databaseconnector-640">DatabaseConnector 6.4.0<small>2025-01-30</small><a class="anchor" aria-label="anchor" href="#databaseconnector-640"></a></h2>
 <p>Changes:</p>
 <ul><li>Adding support for InterSystems IRIS.</li>
 </ul></div>
@@ -167,7 +183,7 @@
 <li><p>Supporting external tables on RedShift.</p></li>
 <li><p>Adding support for ODBC connections to Spark.</p></li>
 <li><p>Querying to Andromeda when using a DBI driver (instead of a JDBC driver) now also uses batching to avoid running out of memory.</p></li>
-<li><p>Adding <code>appendToTable</code> argument to <code><a href="../reference/querySqlToAndromeda.html">querySqlToAndromeda()</a></code>, <code><a href="../reference/renderTranslateQuerySqlToAndromeda.html">renderTranslateQuerySqlToAndromeda()</a></code>, and <code><a href="../reference/lowLevelQuerySqlToAndromeda.html">lowLevelQuerySqlToAndromeda()</a></code>.</p></li>
+<li><p>Adding <code>appendToTable</code> argument to <code><a href="../reference/querySqlToAndromeda.html">querySqlToAndromeda()</a></code>, <code><a href="../reference/renderTranslateQuerySqlToAndromeda.html">renderTranslateQuerySqlToAndromeda()</a></code>, and <code>lowLevelQuerySqlToAndromeda()</code>.</p></li>
 </ol><p>Bugfixes:</p>
 <ol style="list-style-type: decimal"><li>Fix error when calling <code><a href="../reference/insertTable.html">insertTable()</a></code> and all column names require quotes.</li>
 </ol></div>
@@ -367,11 +383,11 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Martijn Schuemie, Marc Suchard.</p>
+  <p></p><p>Developed by Martijn Schuemie, Marc Suchard, Adam Black.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer></div>

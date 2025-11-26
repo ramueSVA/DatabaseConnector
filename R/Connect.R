@@ -1,5 +1,3 @@
-# @file Connect.R
-#
 # Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of DatabaseConnector
@@ -177,7 +175,6 @@ createConnectionDetails <- function(dbms,
   class(result) <- c("ConnectionDetails", "DefaultConnectionDetails")
   return(result)
 }
-
 
 #' Create DBI connection details
 #' 
@@ -574,10 +571,10 @@ connectNetezza <- function(connectionDetails) {
     connection <- connectUsingJdbcDriver(driver, connectionString, dbms = connectionDetails$dbms)
   } else {
     connection <- connectUsingJdbcDriver(driver,
-      connectionString,
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      dbms = connectionDetails$dbms
+                                         connectionString,
+                                         user = connectionDetails$user(),
+                                         password = connectionDetails$password(),
+                                         dbms = connectionDetails$dbms
     )
   }
   return(connection)
@@ -604,10 +601,10 @@ connectImpala <- function(connectionDetails) {
     connection <- connectUsingJdbcDriver(driver, connectionString, dbms = connectionDetails$dbms)
   } else {
     connection <- connectUsingJdbcDriver(driver,
-      connectionString,
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      dbms = connectionDetails$dbms
+                                         connectionString,
+                                         user = connectionDetails$user(),
+                                         password = connectionDetails$password(),
+                                         dbms = connectionDetails$dbms
     )
   }
   return(connection)
@@ -617,7 +614,7 @@ connectHive <- function(connectionDetails) {
   inform("Connecting using Hive driver")
   jarPath <- findPathToJar("^hive-jdbc-([.0-9]+-)*standalone\\.jar$", connectionDetails$pathToDriver)
   driver <- getJbcDriverSingleton("org.apache.hive.jdbc.HiveDriver", jarPath)
-
+  
   if (is.null(connectionDetails$connectionString()) || connectionDetails$connectionString() == "") {
     connectionString <- paste0("jdbc:hive2://", connectionDetails$server(), ":", connectionDetails$port(), "/")
     if (!is.null(connectionDetails$extraSettings)) {
@@ -627,10 +624,10 @@ connectHive <- function(connectionDetails) {
     connectionString <- connectionDetails$connectionString()
   }
   connection <- connectUsingJdbcDriver(driver,
-    connectionString,
-    user = connectionDetails$user(),
-    password = connectionDetails$password(),
-    dbms = connectionDetails$dbms
+                                       connectionString,
+                                       user = connectionDetails$user(),
+                                       password = connectionDetails$password(),
+                                       dbms = connectionDetails$dbms
   )
   return(connection)
 }
@@ -730,7 +727,7 @@ connectSnowflake <- function(connectionDetails) {
       password = connectionDetails$password(),
       dbms = connectionDetails$dbms,
       "CLIENT_TIMESTAMP_TYPE_MAPPING"="TIMESTAMP_NTZ",
-      "QUOTED_IDENTIFIERS_IGNORE_CASE"="TRUE"
+      "QUOTED_IDENTIFIERS_IGNORE_CASE"="FALSE"
     )
   }
   return(connection)
@@ -811,14 +808,6 @@ connectUsingJdbcDriver <- function(jdbcDriver,
       abort(paste0("Unable to connect JDBC to ", url, " (", rJava::.jcall(x, "S", "getMessage"), ")"))
     }
   }
-  ensureDatabaseConnectorConnectionClassExists()
-  class <- getClassDef("DatabaseConnectorJdbcConnection", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("DatabaseConnectorJdbcConnection",
-             contains = "DatabaseConnectorConnection", 
-             slots = list(jConnection = "jobjRef"),
-             where = class_cache)
-  }
   connection <- new("DatabaseConnectorJdbcConnection",
     jConnection = jConnection,
     identifierQuote = "",
@@ -831,41 +820,12 @@ connectUsingJdbcDriver <- function(jdbcDriver,
   return(connection)
 }
 
-ensureDatabaseConnectorConnectionClassExists <- function() {
-  class <- getClassDef("Microsoft SQL Server", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("Microsoft SQL Server",
-             where = class_cache)
-  }
-  class <- getClassDef("DatabaseConnectorConnection", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("DatabaseConnectorConnection", 
-             contains = c("Microsoft SQL Server", "DBIConnection"),
-             slots = list(
-               identifierQuote = "character",
-               stringQuote = "character",
-               dbms = "character",
-               uuid = "character"
-             ),
-             where = class_cache)
-  }
-}
 
 connectUsingDbi <- function(dbiConnectionDetails) {
   dbms <- dbiConnectionDetails$dbms
   dbiConnectionDetails$dbms <- NULL
   dbiConnection <- do.call(DBI::dbConnect, dbiConnectionDetails)
-  ensureDatabaseConnectorConnectionClassExists()
-  class <- getClassDef("DatabaseConnectorDbiConnection", where = class_cache, inherits = FALSE)
-  if (is.null(class) || methods::isVirtualClass(class)) {
-    setClass("DatabaseConnectorDbiConnection",
-             contains = "DatabaseConnectorConnection", 
-             slots = list(
-               dbiConnection = "DBIConnection",
-               server = "character"
-             ),
-             where = class_cache)
-  }
+  
   connection <- new("DatabaseConnectorDbiConnection",
     server = dbms,
     dbiConnection = dbiConnection,
@@ -890,6 +850,24 @@ connectDuckdb <- function(connectionDetails) {
       bigint = "integer64"
     )
   )
+  # Check if ICU extension if installed, and if not, try to install it:
+  isInstalled <- querySql(
+    connection = connection, 
+    sql = "SELECT installed FROM duckdb_extensions() WHERE extension_name = 'icu';"
+  )[1, 1]
+  if (!isInstalled) {
+    warning("The ICU extension of DuckDB is not installed. Attempting to install it.")
+    tryCatch(
+      executeSql(connection, "INSTALL icu"),
+      error = function(e) {
+        warning("Attempting to install the ICU extension of DuckDB failed.\n", 
+                "You may need to check your internet connection.\n",
+                "For more detail, try 'executeSql(connection, \"INSTALL icu\")'.\n",
+                "Be aware that some time and date functionality will not be available.")   
+        return(NULL)
+      }
+    )
+  }
   return(connection)
 }
 
@@ -989,7 +967,9 @@ dbms <- function(connection) {
     "RedshiftConnection" = "redshift",
     "BigQueryConnection" = "bigquery",
     "SQLiteConnection" = "sqlite",
-    "duckdb_connection" = "duckdb"
+    "duckdb_connection" = "duckdb",
+    "Snowflake" = "snowflake",
+    "Spark SQL" = "spark"
     # add mappings from various DBI connection classes to SqlRender dbms here
   )
 }

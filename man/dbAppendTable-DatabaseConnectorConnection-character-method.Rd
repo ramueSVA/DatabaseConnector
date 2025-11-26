@@ -10,8 +10,6 @@
   value,
   databaseSchema = NULL,
   temporary = FALSE,
-  oracleTempSchema = NULL,
-  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   ...,
   row.names = NULL
 )
@@ -35,12 +33,6 @@ given verbatim, e.g. \code{SQL('"my_schema"."table_name"')}
 \item{databaseSchema}{The name of the database schema. See details for platform-specific details.}
 
 \item{temporary}{Should the table created as a temp table?}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
-
-\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To
-emulate temp tables, provide a schema with write privileges where temp tables
-can be created.}
 
 \item{...}{Other parameters passed on to methods.}
 

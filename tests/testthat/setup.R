@@ -1,5 +1,8 @@
 library(DatabaseConnector)
 
+# need to initialize rJava to get J() to work as in rJava::J("org.ohdsi.databaseConnector.BatchedQuery")$getAvailableHeapSpace()
+rJava::.jinit(system.file("java", "DatabaseConnector.jar", package = "DatabaseConnector"))
+
 # Download the JDBC drivers used in the tests ----------------------------------
 if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") != "TRUE") {
   oldJarFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
@@ -36,7 +39,7 @@ addDbmsToLabel <- function(label, testServer) {
 # Create a list with testing server details ------------------------------
 testServers <- list()
 
-# Postgres
+# Postgres-----------------------------------------------------------------
 if (Sys.getenv("CDM5_POSTGRESQL_SERVER") != "") {
   parts <- unlist(strsplit(Sys.getenv("CDM5_POSTGRESQL_SERVER"), "/"))
   host <- parts[1]
@@ -61,7 +64,7 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") != "") {
   )
 }
 
-# SQL Server
+# SQL Server ------------------------------------------------------------
 if (Sys.getenv("CDM5_SQL_SERVER_SERVER") != "") {
   connectionString <- paste0("jdbc:sqlserver://", Sys.getenv("CDM5_SQL_SERVER_SERVER"))
   testServers[[length(testServers) + 1]] <- list(
@@ -82,7 +85,7 @@ if (Sys.getenv("CDM5_SQL_SERVER_SERVER") != "") {
   )
 }
 
-# Oracle
+# Oracle ----------------------------------------------------------------------
 if (Sys.getenv("CDM5_ORACLE_SERVER") != "") {
   port <- "1521"
   parts <- unlist(strsplit(Sys.getenv("CDM5_ORACLE_SERVER"), "/"))
@@ -107,7 +110,7 @@ if (Sys.getenv("CDM5_ORACLE_SERVER") != "") {
   )
 }
 
-# RedShift
+# RedShift ----------------------------------------------------------------------
 if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
   parts <- unlist(strsplit(Sys.getenv("CDM5_REDSHIFT_SERVER"), "/"))
   host <- parts[1]
@@ -132,7 +135,7 @@ if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
   )
 }
 
-# Snowflake
+# Snowflake --------------------------------------------------------------------
 if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
   testServers[[length(testServers) + 1]] <- list(
     connectionDetails = details <- createConnectionDetails(
@@ -147,26 +150,26 @@ if (Sys.getenv("CDM_SNOWFLAKE_CONNECTION_STRING") != "") {
   )
 }
 
-# Databricks (Spark)
+# Databricks (Spark) --------------------------------------------------------------------------
 # Databricks is causing segfault errors on Linux. Temporary workaround is not to test on
 # Linux
 if (.Platform$OS.type == "windows") {
   if (Sys.getenv("CDM5_SPARK_CONNECTION_STRING") != "") {
     testServers[[length(testServers) + 1]] <- list(
-        connectionDetails = details <- createConnectionDetails(
-          dbms = "spark",
-          user = Sys.getenv("CDM5_SPARK_USER"),
-          password = URLdecode(Sys.getenv("CDM5_SPARK_PASSWORD")),
-          connectionString = Sys.getenv("CDM5_SPARK_CONNECTION_STRING")
-        ),
-        NULL,
-        cdmDatabaseSchema = Sys.getenv("CDM5_SPARK_CDM_SCHEMA"),
-        tempEmulationSchema = Sys.getenv("CDM5_SPARK_OHDSI_SCHEMA")
-      )
+      connectionDetails = details <- createConnectionDetails(
+        dbms = "spark",
+        user = Sys.getenv("CDM5_SPARK_USER"),
+        password = URLdecode(Sys.getenv("CDM5_SPARK_PASSWORD")),
+        connectionString = Sys.getenv("CDM5_SPARK_CONNECTION_STRING")
+      ),
+      NULL,
+      cdmDatabaseSchema = Sys.getenv("CDM5_SPARK_CDM_SCHEMA"),
+      tempEmulationSchema = Sys.getenv("CDM5_SPARK_OHDSI_SCHEMA")
+    )
   }
 }
 
-# BigQuery
+# BigQuery ------------------------------------------------------------------
 if (Sys.getenv("CDM_BIG_QUERY_CONNECTION_STRING") != "") {
   # To avoid rate limit on BigQuery, only test on 1 OS:
   if (.Platform$OS.type == "windows") {
@@ -192,9 +195,7 @@ if (Sys.getenv("CDM_BIG_QUERY_CONNECTION_STRING") != "") {
   }
 }
 
-
-
-# InterSystems IRIS
+# InterSystems IRIS -----------------------------------------------------------------
 if (Sys.getenv("CDM_IRIS_CONNECTION_STRING") != "") {
   testServers[[length(testServers) + 1]] <- list(
     connectionDetails = details <- createConnectionDetails(
@@ -204,12 +205,12 @@ if (Sys.getenv("CDM_IRIS_CONNECTION_STRING") != "") {
       connectionString = Sys.getenv("CDM_IRIS_CONNECTION_STRING")
     ),
     NULL,
-    cdmDatabaseSchema = Sys.getenv("CDM_IRIS_CDM53_SCHEMA"),
+    cdmDatabaseSchema = Sys.getenv("CDM_IRIS_CDM_SCHEMA"),
     tempEmulationSchema = Sys.getenv("CDM_IRIS_OHDSI_SCHEMA")
   )
 }
 
-# SQLite
+# SQLite ----------------------------------------------------------------------------
 sqliteFile <- tempfile(fileext = ".sqlite")
 if (testthat::is_testing()) {
   withr::defer(unlink(sqliteFile, force = TRUE), testthat::teardown_env())
@@ -257,7 +258,7 @@ testServers[[length(testServers) + 1]] <- list(
   tempEmulationSchema = NULL
 )
 
-# DuckDB
+# DuckDB ---------------------------------------------------------------
 duckdbFile <- tempfile(fileext = ".duckdb")
 if (testthat::is_testing()) {
   withr::defer(unlink(duckdbFile, force = TRUE), testthat::teardown_env())
@@ -304,3 +305,4 @@ testServers[[length(testServers) + 1]] <- list(
   cdmDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = NULL
 )
+

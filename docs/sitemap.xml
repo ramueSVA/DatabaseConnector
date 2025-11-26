@@ -42,6 +42,8 @@
 <url><loc>/reference/dbCreateTable-DatabaseConnectorConnection-method.html</loc></url>
 <url><loc>/reference/dbDisconnect-DatabaseConnectorConnection-method.html</loc></url>
 <url><loc>/reference/dbExecute-DatabaseConnectorConnection-character-method.html</loc></url>
+<url><loc>/reference/dbExecute-DatabaseConnectorDbiConnection-character-method.html</loc></url>
+<url><loc>/reference/dbExecute-DatabaseConnectorJdbcConnection-character-method.html</loc></url>
 <url><loc>/reference/dbExistsTable-DatabaseConnectorConnection-character-method.html</loc></url>
 <url><loc>/reference/dbFetch-DatabaseConnectorDbiResult-method.html</loc></url>
 <url><loc>/reference/dbFetch-DatabaseConnectorJdbcResult-method.html</loc></url>
@@ -49,6 +51,8 @@
 <url><loc>/reference/dbGetInfo-DatabaseConnectorConnection-method.html</loc></url>
 <url><loc>/reference/dbGetInfo-DatabaseConnectorDriver-method.html</loc></url>
 <url><loc>/reference/dbGetQuery-DatabaseConnectorConnection-character-method.html</loc></url>
+<url><loc>/reference/dbGetQuery-DatabaseConnectorDbiConnection-character-method.html</loc></url>
+<url><loc>/reference/dbGetQuery-DatabaseConnectorJdbcConnection-character-method.html</loc></url>
 <url><loc>/reference/dbGetRowCount-DatabaseConnectorDbiResult-method.html</loc></url>
 <url><loc>/reference/dbGetRowCount-DatabaseConnectorJdbcResult-method.html</loc></url>
 <url><loc>/reference/dbGetRowCount-DatabaseConnectorResult-method.html</loc></url>
@@ -101,6 +105,7 @@
 <url><loc>/reference/querySql.ffdf.html</loc></url>
 <url><loc>/reference/querySql.html</loc></url>
 <url><loc>/reference/querySqlToAndromeda.html</loc></url>
+<url><loc>/reference/reexports.html</loc></url>
 <url><loc>/reference/renderTranslateExecuteSql.html</loc></url>
 <url><loc>/reference/renderTranslateQueryApplyBatched.html</loc></url>
 <url><loc>/reference/renderTranslateQuerySql.ffdf.html</loc></url>

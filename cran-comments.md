@@ -1,12 +1,14 @@
-This update includes 1 change. (see NEWS.md).
+This is a major release, with 6 changes and 5 fixes (see NEWS.md).
+
+All reverse dependency issues should now be resolved.
 
 ---
 
 ## Test environments
-* Ubuntu 20.04, R 4.4.2
-* MacOS, R 4.4.2
+* Ubuntu 22.04, R 4.5.1
+* MacOS, R 4.5.1
 * MacOS, 4.4.1
-* Windows 10, R 4.4.2
+* Windows 10, R 4.5.1
 
 ## R CMD check results
 

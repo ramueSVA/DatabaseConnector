@@ -14,162 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Low level function for retrieving data to a local Andromeda object
-#'
-#' @description
-#' This is the equivalent of the [querySqlToAndromeda()] function, except no error report is
-#' written when an error occurs.
-#'
-#' @template Connection
-#' @param query                The SQL statement to retrieve the data
-#' @param datesAsString        Should dates be imported as character vectors, our should they be
-#'                             converted to R's date format?
-#' @template Andromeda
-#' @template SnakeCaseToCamelCase
-#' @template IntegerAsNumeric
-#' 
-#' @details
-#' Retrieves data from the database server and stores it in a local Andromeda object This allows
-#' very large data sets to be retrieved without running out of memory. Null values in the database are
-#' converted to NA values in R. If a table with the same name already exists in the local Andromeda
-#' object it is replaced.
-#'
-#' @return
-#' Invisibly returns the andromeda. The Andromeda object will have a table added with the query
-#' results.
-#'
-#' @export
-lowLevelQuerySqlToAndromeda <- function(connection,
-                                        query,
-                                        andromeda,
-                                        andromedaTableName,
-                                        datesAsString = FALSE,
-                                        appendToTable = FALSE,
-                                        snakeCaseToCamelCase = FALSE,
-                                        integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                     default = TRUE
-                                        ),
-                                        integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                       default = TRUE
-                                        )) {
-  UseMethod("lowLevelQuerySqlToAndromeda", connection)
-}
-
-#' @export
-lowLevelQuerySqlToAndromeda.default <- function(connection,
-                                                query,
-                                                andromeda,
-                                                andromedaTableName,
-                                                datesAsString = FALSE,
-                                                appendToTable = FALSE,
-                                                snakeCaseToCamelCase = FALSE,
-                                                integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                             default = TRUE
-                                                ),
-                                                integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                               default = TRUE
-                                                )) {
-  if (rJava::is.jnull(connection@jConnection)) {
-    stop("Connection is closed")
-  }
-  logTrace(paste("Querying SQL:", truncateSql(query)))
-  startTime <- Sys.time()
-  
-  batchedQuery <- rJava::.jnew(
-    "org.ohdsi.databaseConnector.BatchedQuery",
-    connection@jConnection,
-    query,
-    dbms(connection)
-  )
-  
-  on.exit(rJava::.jcall(batchedQuery, "V", "clear"))
-  
-  columnTypes <- rJava::.jcall(batchedQuery, "[I", "getColumnTypes")
-  if (length(columnTypes) == 0) {
-    stop("No columns found")
-  }
-  if (any(columnTypes == 5)) {
-    validateInt64Query()
-  }
-  first <- TRUE
-  while (!rJava::.jcall(batchedQuery, "Z", "isDone")) {
-    rJava::.jcall(batchedQuery, "V", "fetchBatch")
-    batch <- parseJdbcColumnData(batchedQuery,
-                                 columnTypes = columnTypes,
-                                 datesAsString = datesAsString,
-                                 integer64AsNumeric = integer64AsNumeric,
-                                 integerAsNumeric = integerAsNumeric
-    )
-    if (snakeCaseToCamelCase) {
-      colnames(batch) <- SqlRender::snakeCaseToCamelCase(colnames(batch))
-    }
-    if (first && !appendToTable) {
-      andromeda[[andromedaTableName]] <- batch
-    } else {
-      Andromeda::appendToTable(andromeda[[andromedaTableName]], batch)
-    }
-    first <- FALSE
-  }
-  delta <- Sys.time() - startTime
-  logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-  
-  invisible(andromeda)
-}
-
-#' @export
-lowLevelQuerySqlToAndromeda.DatabaseConnectorDbiConnection <- function(connection,
-                                                                       query,
-                                                                       andromeda,
-                                                                       andromedaTableName,
-                                                                       datesAsString = FALSE,
-                                                                       appendToTable = FALSE,
-                                                                       snakeCaseToCamelCase = FALSE,
-                                                                       integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                                                    default = TRUE
-                                                                       ),
-                                                                       integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                                                      default = TRUE
-                                                                       )) {
-  logTrace(paste("Querying SQL:", truncateSql(query)))
-  startTime <- Sys.time()
-  
-  batchSize <- 100000
-  resultSet <- DBI::dbSendQuery(connection@dbiConnection, query)
-  on.exit(DBI::dbClearResult(resultSet))
-  first <- TRUE
-  while (first || !DBI::dbHasCompleted(resultSet)) {
-    batch <- DBI::dbFetch(resultSet, batchSize)
-    if (integerAsNumeric) {
-      for (i in seq_len(ncol(batch))) {
-        if (is(batch[[i]], "integer")) {
-          batch[[i]] <- as.numeric(batch[[i]])
-        }
-      }
-    }
-    if (integer64AsNumeric) {
-      for (i in seq_len(ncol(batch))) {
-        if (is(batch[[i]], "integer64")) {
-          batch[[i]] <- convertInteger64ToNumeric(batch[[i]])
-        }
-      }
-    }
-    batch <- convertFields(dbms(connection), batch)
-    if (snakeCaseToCamelCase) {
-      colnames(batch) <- SqlRender::snakeCaseToCamelCase(colnames(batch))
-    }
-    if (first && !appendToTable) {
-      andromeda[[andromedaTableName]] <- batch
-    } else {
-      Andromeda::appendToTable(andromeda[[andromedaTableName]], batch)
-    }
-    first <- FALSE
-  }
-  delta <- Sys.time() - startTime
-  logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
-  
-  invisible(andromeda)
-}
-
 #' Retrieves data to a local Andromeda object
 #'
 #' @description
@@ -215,23 +59,18 @@ lowLevelQuerySqlToAndromeda.DatabaseConnectorDbiConnection <- function(connectio
 #' andromeda$foo
 #' }
 #' @export
-querySqlToAndromeda <- function(connection,
-                                sql,
-                                andromeda,
-                                andromedaTableName,
-                                errorReportFile = file.path(getwd(), "errorReportSql.txt"),
-                                snakeCaseToCamelCase = FALSE,
-                                appendToTable = FALSE,
-                                integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                             default = TRUE
-                                ),
-                                integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                               default = TRUE
-                                )) {
-  if (inherits(
+querySqlToAndromeda <- function(
     connection,
-    "DatabaseConnectorJdbcConnection"
-  ) && rJava::is.jnull(connection@jConnection)) {
+    sql,
+    andromeda,
+    andromedaTableName,
+    errorReportFile = file.path(getwd(), "errorReportSql.txt"),
+    snakeCaseToCamelCase = FALSE,
+    appendToTable = FALSE,
+    integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
+    integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE)
+) {
+  if (!DBI::dbIsValid(connection)) {
     stop("Connection is closed")
   }
   if (!inherits(andromeda, "Andromeda")) {
@@ -250,31 +89,44 @@ querySqlToAndromeda <- function(connection,
       "statements were found"
     ))
   }
-  tryCatch(
-    {
-      andromeda <- lowLevelQuerySqlToAndromeda(
-        connection = connection,
-        query = sqlStatements[1],
-        andromeda = andromeda,
-        andromedaTableName = andromedaTableName,
-        appendToTable = appendToTable, 
-        snakeCaseToCamelCase = snakeCaseToCamelCase,
-        integerAsNumeric = integerAsNumeric,
-        integer64AsNumeric = integer64AsNumeric
-      )
-      invisible(andromeda)
-    },
-    error = function(err) {
-      .createErrorReport(dbms(connection), err$message, sql, errorReportFile)
+  
+  tryCatch({
+    logTrace(paste("Querying SQL:", truncateSql(sql)))
+    startTime <- Sys.time()
+    queryResult <- DBI::dbSendQuery(connection, sql)
+    
+    on.exit(DBI::dbClearResult(queryResult))
+    first <- TRUE
+    # Even if there are no rows, we want to get an empty table with the right fields, hence check
+    # for `first`:
+    while (!DBI::dbHasCompleted(queryResult) || first) {
+      batch <- DBI::dbFetch(queryResult, n = DBFETCH_BATCH_SIZE)
+      batch <- convertAllInteger64ToNumeric(batch, integerAsNumeric, integer64AsNumeric)
+      batch <- convertFields(batch, dbms(connection))
+      if (snakeCaseToCamelCase) {
+        colnames(batch) <- SqlRender::snakeCaseToCamelCase(colnames(batch))
+      }
+      if (first && !appendToTable) {
+        andromeda[[andromedaTableName]] <- batch
+        first <- FALSE
+      } else {
+        Andromeda::appendToTable(andromeda[[andromedaTableName]], batch)
+      }
     }
-  )
+    delta <- Sys.time() - startTime
+    logTrace(paste("Querying SQL took", delta, attr(delta, "units")))
+    invisible(andromeda)
+  },
+  error = function(err) {
+    .createErrorReport(dbms(connection), err$message, sql, errorReportFile)
+  })
 }
 
 #' Render, translate, and query to local Andromeda
 #'
 #' @description
 #' This function renders, and translates SQL, sends it to the server, and returns the results as an
-#' ffdf object
+#' `Andromeda` object
 #'
 #' @template Connection
 #' @param sql                    The SQL to be send.
@@ -314,35 +166,25 @@ querySqlToAndromeda <- function(connection,
 #' andromeda$foo
 #' }
 #' @export
-renderTranslateQuerySqlToAndromeda <- function(connection,
-                                               sql,
-                                               andromeda,
-                                               andromedaTableName,
-                                               errorReportFile = file.path(
-                                                 getwd(),
-                                                 "errorReportSql.txt"
-                                               ),
-                                               snakeCaseToCamelCase = FALSE,
-                                               appendToTable = FALSE,
-                                               oracleTempSchema = NULL,
-                                               tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                                               integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
-                                                                            default = TRUE
-                                               ),
-                                               integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
-                                                                              default = TRUE
-                                               ),
-                                               ...) {
+renderTranslateQuerySqlToAndromeda <- function(
+    connection,
+    sql,
+    andromeda,
+    andromedaTableName,
+    errorReportFile = file.path(
+      getwd(),
+      "errorReportSql.txt"
+    ),
+    snakeCaseToCamelCase = FALSE,
+    appendToTable = FALSE,
+    tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+    integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
+    integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
+    ...
+) {
   if (is(connection, "Pool")) {
     connection <- pool::poolCheckout(connection)
     on.exit(pool::poolReturn(connection))
-  }
-  if (!is.null(oracleTempSchema) && oracleTempSchema != "") {
-    warn("The 'oracleTempSchema' argument is deprecated. Use 'tempEmulationSchema' instead.",
-         .frequency = "regularly",
-         .frequency_id = "oracleTempSchema"
-    )
-    tempEmulationSchema <- oracleTempSchema
   }
   sql <- SqlRender::render(sql, ...)
   sql <- SqlRender::translate(sql,

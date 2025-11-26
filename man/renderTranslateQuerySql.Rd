@@ -9,7 +9,6 @@ renderTranslateQuerySql(
   sql,
   errorReportFile = file.path(getwd(), "errorReportSql.txt"),
   snakeCaseToCamelCase = FALSE,
-  oracleTempSchema = NULL,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
   integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
@@ -26,8 +25,6 @@ renderTranslateQuerySql(
 Defaults to 'errorReportSql.txt' in the current working directory.}
 
 \item{snakeCaseToCamelCase}{If true, field names are assumed to use snake_case, and are converted to camelCase.}
-
-\item{oracleTempSchema}{DEPRECATED: use \code{tempEmulationSchema} instead.}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To
 emulate temp tables, provide a schema with write privileges where temp tables
@@ -48,6 +45,17 @@ A data frame.
 This function renders, and translates SQL, sends it to the server, and returns the results as a data.frame.
 }
 \details{
+Fields will be automatically converted for improved consistenty in these situations:
+\itemize{
+\item SQLite: Fields with names ending in \verb{_date} will be converted to DATE fields. Rationale: SQLite
+does not support DATE fields.
+\item SQLite: Fields with names ending in \verb{_datetime} will be converted to POSIXct fields. Rationale:
+SQLite does not support DATETIME fields.
+\item BigQuery and Snowflake: Integer fields will be converted to Integer if it fits in an integer, or
+will remain Integer64 otherwise. Rationale: these platforms do not distinguish between INT and
+BIGINT.
+}
+
 This function calls the \code{render} and \code{translate} functions in the \code{SqlRender} package before
 calling \code{\link[=querySql]{querySql()}}.
 }
