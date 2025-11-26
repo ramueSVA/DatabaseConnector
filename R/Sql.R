@@ -677,7 +677,7 @@ dropEmulatedTempTables <- function(connection,
   if (length(tableNames) > 0) {
     inform(sprintf("Dropping tables '%s' from schema '%s'.", paste(tableNames, collapse = "', '"), tempEmulationSchema))
     tableNames <- tolower(paste(tempEmulationSchema, tableNames, sep = "."))
-    if (dbms(connection) == "spark") {
+    if (dbms(connection) %in% c("spark", "dremio")) {
       sql <- paste(sprintf("DROP TABLE %s;", tableNames), collapse = "\n")
     } else {
       sql <- paste(sprintf("TRUNCATE TABLE %s; DROP TABLE %s;", tableNames, tableNames), collapse = "\n")
@@ -702,7 +702,7 @@ dropEmulatedTempTables <- function(connection,
 #' 
 #' @export
 requiresTempEmulation <- function(dbms){
-  return(dbms %in% c("oracle", "spark", "impala", "bigquery", "snowflake"))
+  return(dbms %in% c("oracle", "spark", "impala", "bigquery", "snowflake", "dremio"))
 }
 
 #' Assert the temp emulation schema is set

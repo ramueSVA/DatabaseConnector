@@ -137,7 +137,7 @@ ctasHack <- function(connection, sqlTableName, tempTable, sqlFieldNames, sqlData
         MARGIN = 1,
         FUN = formatRow,
         aliases = varAliases,
-        castValues = dbms(connection) %in% c("bigquery", "hive"),
+        castValues = dbms(connection) %in% c("bigquery", "hive", "dremio"),
         sqlDataTypes = sqlDataTypes
       )),
       collapse = "\nUNION ALL\nSELECT "
